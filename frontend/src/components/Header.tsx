@@ -16,10 +16,7 @@ export const Header = ({ isAuthenticated = false }: HeaderProps) => {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-              <BookOpen className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold text-foreground">DocChat</span>
+            <img src="/super-doc-logo.png" className="h-48 w-48"/>
           </Link>
 
           {/* Navigation */}

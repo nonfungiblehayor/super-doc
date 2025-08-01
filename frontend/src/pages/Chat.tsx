@@ -30,9 +30,9 @@ const Chat = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+  // useEffect(() => {
+  //   scrollToBottom();
+  // }, [messages]);
 
   // Sample welcome message
   useEffect(() => {
@@ -68,7 +68,7 @@ const Chat = () => {
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: "assistant",
-        content: `Based on the documentation, here's what I found about "${inputValue}":\n\nThis is a simulated response that would normally come from AI analysis of the documentation. The AI would provide contextual, accurate answers based on the content of the documentation you provided.`,
+        content: `Based on the documentation, here's what I found about "${inputValue}":\n\nThis is a simulated response hat would normally come from AI analysis of the documentation.  hat would normally come from AI analysis of the documentation.  hat would normally come from AI analysis of the documentation. hat would normally come from AI analysis of the documentation. hat would normally come from AI analysis of the documentation. hat would normally come from AI analysis of the documentation. hat would normally come from AI analysis of the documentation. hat would normally come from AI analysis of the documentation.  that would normally come from AI analysis of the documentation. The AI would provide contextual, accurate answers based on the content of the documentation you provided.Based on the documentation, here's what I found about "${inputValue}":\n\nThis is a simulated response that would normally come from AI analysis of the documentation. The AI would provide contextual, accurate answers based on the content of the documentation you provided.Based on the documentation, here's what I found about "${inputValue}":\n\nThis is a simulated response that would normally come from AI analysis of the documentation. The AI would provide contextual, accurate answers based on the content of the documentation you provided.Based on the documentation, here's what I found about "${inputValue}":\n\nThis is a simulated response that would normally come from AI analysis of the documentation. The AI would provide contextual, accurate answers based on the content of the documentation you provided.Based on the documentation, here's what I found about "${inputValue}":\n\nThis is a simulated response that would normally come from AI analysis of the documentation. The AI would provide contextual, accurate answers based on the content of the documentation you provided.Based on the documentation, here's what I found about "${inputValue}":\n\nThis is a simulated response that would normally come from AI analysis of the documentation. The AI would provide contextual, accurate answers based on the content of the documentation you provided.`,
         timestamp: new Date(),
       };
 
@@ -88,12 +88,10 @@ const Chat = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-background">
-      <Header isAuthenticated={true} />
-
-      <div className="flex-1 flex">
+    <div className="h-[98%] flex flex-col bg-background">
+      <div className="flex-1 h-full flex">
         {/* Chat Section */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 w-3/12 flex flex-col">
           {/* Document URL Header */}
           <div className="border-b p-4 bg-background/95 backdrop-blur">
             <div className="flex items-center gap-3">
@@ -113,8 +111,7 @@ const Chat = () => {
           </div>
 
           {/* Messages */}
-          <ScrollArea className="flex-1 p-4">
-            <div className="space-y-4 max-w-4xl mx-auto">
+            <div className="space-y-4 h-5/6 p-4 overflow-y-scroll max-w-4xl mx-auto">
               {messages.map((message) => (
                 <div
                   key={message.id}
@@ -184,10 +181,9 @@ const Chat = () => {
               
               <div ref={messagesEndRef} />
             </div>
-          </ScrollArea>
-
+          
           {/* Input Form */}
-          <div className="border-t p-4 bg-background/95 backdrop-blur">
+          <div className="border-t fixed w-[41.5%] bottom-4 p-4 bg-background/95 backdrop-blur">
             <form onSubmit={handleSubmit} className="max-w-4xl mx-auto">
               <div className="flex gap-3">
                 <Input
@@ -212,42 +208,36 @@ const Chat = () => {
         <Separator orientation="vertical" />
 
         {/* Preview Section */}
-        <div className="w-1/3 min-w-[300px] flex flex-col">
+        
+        <div className="w-7/12 h-full flex flex-col">
           <div className="p-4 border-b bg-background/95 backdrop-blur">
             <h3 className="font-semibold text-foreground">Response Preview</h3>
             <p className="text-sm text-muted-foreground">Click on any AI response to preview it here</p>
           </div>
-
-          <ScrollArea className="flex-1 p-4">
-            {selectedResponse ? (
-              <div className="space-y-4">
-                <div className="prose prose-sm max-w-none dark:prose-invert">
-                  <p className="whitespace-pre-wrap">{selectedResponse}</p>
-                </div>
-                
-                <Separator />
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="sm" className="h-8 px-3">
-                      <ThumbsUp className="h-3 w-3 mr-1" />
-                      Helpful
-                    </Button>
-                    <Button variant="ghost" size="sm" className="h-8 px-3">
-                      <ThumbsDown className="h-3 w-3 mr-1" />
-                      Not helpful
+          {selectedResponse ? (
+                <div className="prose h-5/6 flex flex-col justify-between prose-sm max-w-none dark:prose-invert">
+                  <p className="whitespace-pre-wrap overflow-y-scroll px-2">{selectedResponse}</p>
+                  <div className="flex fixed bottom-8 w-[55%] items-center px-4 justify-between">
+                    <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="sm" className="h-8 px-3">
+                        <ThumbsUp className="h-3 w-3 mr-1" />
+                        Helpful
+                      </Button>
+                      <Button variant="ghost" size="sm" className="h-8 px-3">
+                        <ThumbsDown className="h-3 w-3 mr-1" />
+                        Not helpful
+                      </Button>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => copyToClipboard(selectedResponse)}
+                    >
+                      <Copy className="h-3 w-3 mr-1" />
+                      Copy
                     </Button>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => copyToClipboard(selectedResponse)}
-                  >
-                    <Copy className="h-3 w-3 mr-1" />
-                    Copy
-                  </Button>
-                </div>
-              </div>
+                </div> 
             ) : (
               <div className="flex items-center justify-center h-full text-center">
                 <div className="space-y-2">
@@ -258,7 +248,6 @@ const Chat = () => {
                 </div>
               </div>
             )}
-          </ScrollArea>
         </div>
       </div>
     </div>
