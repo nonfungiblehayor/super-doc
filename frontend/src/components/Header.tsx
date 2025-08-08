@@ -1,18 +1,23 @@
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
-import { BookOpen, User, CreditCard } from "lucide-react";
+import { CreditCard, Loader2, User2 } from "lucide-react";
+import { User } from "@supabase/supabase-js";
+import { useUser } from "@/context/user";
+import { Dispatch, SetStateAction } from "react";
 
-interface HeaderProps {
-  isAuthenticated?: boolean;
+type authProps = {
+  appUser: User,
+  showdropdown: Dispatch<SetStateAction<Boolean>>,
+  dropdown: boolean
 }
 
-export const Header = ({ isAuthenticated = false }: HeaderProps) => {
+export const Header = ({ appUser, showdropdown, dropdown }: authProps) => {
   const location = useLocation();
-  const isHomePage = location.pathname === "/";
-
+  const { loadingUser } = useUser()
+  console.log(appUser)
   return (
     <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-      <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
@@ -20,41 +25,41 @@ export const Header = ({ isAuthenticated = false }: HeaderProps) => {
           </Link>
 
           {/* Navigation */}
+          {location.pathname === "/" && (
           <nav className="flex items-center space-x-4">
-            {isAuthenticated ? (
-              <>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  <CreditCard className="h-4 w-4 mr-2" />
-                  Get Credits
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  <User className="h-4 w-4 mr-2" />
-                  Profile
-                </Button>
-              </>
-            ) : (
-              <>
-                <Link to="/login">
-                  <Button variant="ghost" size="sm">
-                    Log In
+              {appUser ? (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    Get Credits
                   </Button>
-                </Link>
-                <Link to="/signup">
-                  <Button size="sm" className="bg-primary hover:bg-primary-hover">
-                    Sign Up
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => showdropdown(!dropdown)}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <User2 className="w-4 h-4"/>
+                    {/* <img src={appUser.user_metadata?.avatar_url} className="h-4 w-4" />
+                    {appUser.email} */}
                   </Button>
-                </Link>
-              </>
-            )}
+                </>
+              ) : (
+                loadingUser ? "" :
+                <>
+                  <Link to="/signup">
+                    <Button size="sm" className="bg-primary hover:bg-primary-hover">
+                      Sign Up
+                    </Button>
+                  </Link>
+                </>
+              )}
           </nav>
+          )}
         </div>
       </div>
     </header>

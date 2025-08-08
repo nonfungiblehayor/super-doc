@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Header } from "@/components/Header";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Sparkles, BookOpen, MessageSquare } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useUser } from "@/context/user";
 
 const Home = () => {
   const [documentUrl, setDocumentUrl] = useState("");
+  const { appUser} = useUser()
+  // console.log(appUser)
   const navigate = useNavigate();
   const heroTexts = [
     {
@@ -18,6 +21,7 @@ const Home = () => {
       sub: "just ask."
     }
   ]
+  const tabs = ["Paste Link", "Search Docs"]
   const [heroText, setHerotext] = useState<number>(0)
   useEffect(() => {
     const interval = setInterval(() => {
@@ -29,8 +33,11 @@ const Home = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (documentUrl.trim()) {
-      // Navigate to chat page with the document URL
-      navigate(`/chat?url=${encodeURIComponent(documentUrl)}`);
+      if(appUser) {
+        navigate(`/chat?url=${encodeURIComponent(documentUrl)}`);
+      } else {
+        navigate("/signup")
+      }
     }
   };
 
@@ -59,34 +66,66 @@ const Home = () => {
             </h1>
 
             {/* Subheading */}
-            <p className="text-xl sm:text-2xl text-muted-foreground max-w-3xl mx-auto mb-12 leading-relaxed">
+            <p className="text-xl sm:text-2xl text-muted-foreground max-w-3xl mx-auto mb-8 leading-relaxed">
               Skip the keyword hunt — just ask your docs directly and get instant answers.
             </p>
 
-            {/* Input Form */}
-            <form onSubmit={handleSubmit} className="max-w-2xl mx-auto mb-12">
-              <div className="flex flex-col sm:flex-row gap-4 p-2 bg-background rounded-xl border shadow-lg">
-                <div className="flex-1">
-                  <Input
-                    type="url"
-                    placeholder="Paste documentation URL here..."
-                    value={documentUrl}
-                    onChange={(e) => setDocumentUrl(e.target.value)}
-                    className="border-0 bg-transparent text-lg placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0"
-                    required
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  size="lg"
-                  className="bg-primary hover:bg-primary-hover text-primary-foreground px-8 shadow-md"
-                  disabled={!documentUrl.trim()}
-                >
-                  Start Chatting
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </div>
-            </form>
+            <Tabs defaultValue={tabs[0]}>
+              <TabsList className="gap-x-6 text-primary">
+                <TabsTrigger value={tabs[0]}>{tabs[0]}</TabsTrigger>
+                <TabsTrigger value={tabs[1]}>{tabs[1]}</TabsTrigger>
+              </TabsList>
+                <TabsContent value={tabs[0]}>
+                <form onSubmit={handleSubmit} className="max-w-2xl mx-auto mb-12">
+                    <div className="flex flex-col sm:flex-row gap-4 p-2 bg-background rounded-xl border shadow-lg">
+                      <div className="flex-1">
+                        <Input
+                          type="url"
+                          placeholder="Paste documentation URL here..."
+                          value={documentUrl}
+                          onChange={(e) => setDocumentUrl(e.target.value)}
+                          className="border-0 bg-transparent text-lg placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0"
+                          required
+                        />
+                      </div>
+                      <Button
+                        type="submit"
+                        size="lg"
+                        className="bg-primary hover:bg-primary-hover text-primary-foreground px-8 shadow-md"
+                        disabled={!documentUrl.trim()}
+                      >
+                        Start Chatting
+                        <ArrowRight className="ml-2 h-5 w-5" />
+                      </Button>
+                    </div>
+                </form>
+                </TabsContent>
+                <TabsContent value={tabs[1]}>
+                <form onSubmit={handleSubmit} className="max-w-2xl mx-auto mb-12">
+                    <div className="flex flex-col sm:flex-row gap-4 p-2 bg-background rounded-xl border shadow-lg">
+                      <div className="flex-1">
+                        <Input
+                          type="text"
+                          placeholder="Search documentation by name…..."
+                          value={documentUrl}
+                          onChange={(e) => setDocumentUrl(e.target.value)}
+                          className="border-0 bg-transparent text-lg placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0"
+                          required
+                        />
+                      </div>
+                      <Button
+                        type="submit"
+                        size="lg"
+                        className="bg-primary hover:bg-primary-hover text-primary-foreground px-8 shadow-md"
+                        disabled={!documentUrl.trim()}
+                      >
+                        Start Chatting
+                        <ArrowRight className="ml-2 h-5 w-5" />
+                      </Button>
+                    </div>
+                </form>
+                </TabsContent>
+            </Tabs>
 
             {/* Features */}
             {/* <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-4xl mx-auto">
