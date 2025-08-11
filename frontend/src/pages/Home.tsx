@@ -2,14 +2,76 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { AlertCircleIcon, ArrowRight, Sparkles } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUser } from "@/context/user";
+import { AxiosClient } from "@/utils/axios-client";
+import { Loader } from "@/components/ui/loader";
+import { Separator } from "@/components/ui/separator";
 
 const Home = () => {
   const [documentUrl, setDocumentUrl] = useState("");
+  const [docName, setDocName] = useState<string>()
+  const [isLoading, setLoading] = useState<{
+    search: boolean,
+    chatting: boolean
+  }>()
+  const [isError, setError] = useState<{
+    search: string,
+    chatting: string
+  }>()
+  const mockup = [
+{name: 'Firebase Documentation Home', link: 'https://firebase.google.com/docs'}, 
+{name: 'Firebase Authentication', link: 'https://firebase.google.com/docs/auth'},
+{name: 'Cloud Firestore', link: 'https://firebase.google.com/docs/firestore'},
+{name: 'Firebase Realtime Database', link: 'https://firebase.google.com/docs/database'},
+{name: 'Firebase Realtime Database', link: 'https://firebase.google.com/docs/database'},
+{name: 'Firebase Realtime Database', link: 'https://firebase.google.com/docs/database'},
+{name: 'Cloud Functions for Firebase', link: 'https://firebase.google.com/docs'}
+  ]
+  const [suggestions, setSuggestions] = useState<{name: string, link: string}[]>()
+  const [invalidMsg, setInvalidMsg] = useState<string>()
+  const useSearchDoc = async() => {
+    if(isError?.search) {
+      setError(undefined)
+    }
+    if(invalidMsg) {
+      setInvalidMsg(undefined)
+    }
+    if(suggestions) {
+      setSuggestions(undefined)
+    }
+    setLoading((prev) => ({...prev, search: true}))
+    AxiosClient.post(`/find-doc`, { query: docName }).then((response) => {
+      if(response.data?.result?.name) {
+        setDocumentUrl(response.data?.result?.link)
+      } else if(response.data?.result?.suggestions) {
+        setSuggestions(response.data?.result?.suggestions)
+      } else if(response.data?.result?.message) {
+        setInvalidMsg(response.data?.result?.message)
+      }
+    }).catch((error) => {
+      if(error.status === 500) {
+        setError((prev) => ({...prev, search: "An error occured try again"}))
+      } else {
+        setError((prev) => ({...prev, search: error?.message}))
+      }
+      console.log(error)
+    }).finally(() => {
+      setLoading(undefined)
+      setDocName(undefined)
+    })
+  }
+  const disabilityChecker = () => {
+    if(!documentUrl?.trim() && !docName?.trim()) {
+      return true
+    } else if(documentUrl?.trim() && !docName?.trim()) {
+      return false
+    } else if(!documentUrl?.trim() && docName?.trim()) {
+      return false
+    }
+  }
   const { appUser} = useUser()
-  // console.log(appUser)
   const navigate = useNavigate();
   const heroTexts = [
     {
@@ -21,7 +83,7 @@ const Home = () => {
       sub: "just ask."
     }
   ]
-  const tabs = ["Paste Link", "Search Docs"]
+  const tabs = ["Search Docs", "Paste Link"]
   const [heroText, setHerotext] = useState<number>(0)
   useEffect(() => {
     const interval = setInterval(() => {
@@ -75,58 +137,71 @@ const Home = () => {
                 <TabsTrigger value={tabs[0]}>{tabs[0]}</TabsTrigger>
                 <TabsTrigger value={tabs[1]}>{tabs[1]}</TabsTrigger>
               </TabsList>
-                <TabsContent value={tabs[0]}>
-                <form onSubmit={handleSubmit} className="max-w-2xl mx-auto mb-12">
-                    <div className="flex flex-col sm:flex-row gap-4 p-2 bg-background rounded-xl border shadow-lg">
-                      <div className="flex-1">
-                        <Input
-                          type="url"
-                          placeholder="Paste documentation URL here..."
-                          value={documentUrl}
-                          onChange={(e) => setDocumentUrl(e.target.value)}
-                          className="border-0 bg-transparent text-lg placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0"
-                          required
-                        />
+                <TabsContent value={tabs[0]} className="z-10">
+                <form onSubmit={handleSubmit} className="flex flex-col z-10 space-y-1 max-w-2xl mx-auto mb-12">
+                      <div className={`flex flex-col sm:flex-row gap-4 p-2 bg-background z-10 rounded-xl border shadow-lg ${isError?.search && "border-[1px] border-red-500"}`}>
+                        <div className="flex-1">
+                          <Input
+                            type="text"
+                            placeholder="Search documentation by name…..."
+                            value={documentUrl !== "" ? documentUrl : docName}
+                            onChange={(e) => documentUrl !== "" ? setDocumentUrl(e.target.value) : setDocName(e.target.value)}
+                            className={`border-0 bg-transparent text-lg placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0`}
+                            required
+                          />
+                        </div>
+                        <Button
+                          type="submit"
+                          onClick={() => documentUrl ? console.log(10) : useSearchDoc()}
+                          size="lg"
+                          className="bg-primary hover:bg-primary-hover text-primary-foreground px-8 shadow-md"
+                          disabled={disabilityChecker() || isLoading?.search}
+                        >
+                          {documentUrl ? "Start Chatting" : <>{isLoading?.search ? <Loader /> : "Search docs"}</>}
+                          <ArrowRight className="ml-2 h-5 w-5" />
+                        </Button>
                       </div>
-                      <Button
-                        type="submit"
-                        size="lg"
-                        className="bg-primary hover:bg-primary-hover text-primary-foreground px-8 shadow-md"
-                        disabled={!documentUrl.trim()}
-                      >
-                        Start Chatting
-                        <ArrowRight className="ml-2 h-5 w-5" />
-                      </Button>
-                    </div>
+                      {isError?.search && <span className="text-red-500 text-[12px] self-start text-left font-semibold">{isError?.search}</span>}
                 </form>
                 </TabsContent>
-                <TabsContent value={tabs[1]}>
-                <form onSubmit={handleSubmit} className="max-w-2xl mx-auto mb-12">
-                    <div className="flex flex-col sm:flex-row gap-4 p-2 bg-background rounded-xl border shadow-lg">
-                      <div className="flex-1">
-                        <Input
-                          type="text"
-                          placeholder="Search documentation by name…..."
-                          value={documentUrl}
-                          onChange={(e) => setDocumentUrl(e.target.value)}
-                          className="border-0 bg-transparent text-lg placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0"
-                          required
-                        />
+                <TabsContent value={tabs[1]} className="z-10">
+                  <form onSubmit={handleSubmit} className="max-w-2xl z-10 mx-auto mb-12 z-[9999]">
+                      <div className="flex flex-col sm:flex-row gap-4 p-2 bg-background z-10 rounded-xl border shadow-lg">
+                        <div className="flex-1">
+                          <Input
+                            type="url"
+                            placeholder="Paste documentation URL here..."
+                            value={documentUrl}
+                            onChange={(e) => setDocumentUrl(e.target.value)}
+                            className="border-0 bg-transparent text-lg placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0"
+                            required
+                          />
+                        </div>
+                        <Button
+                          type="submit"
+                          size="lg"
+                          className="bg-primary hover:bg-primary-hover text-primary-foreground px-8 shadow-md"
+                          disabled={!documentUrl.trim()}
+                        >
+                          Start Chatting
+                          <ArrowRight className="ml-2 h-5 w-5" />
+                        </Button>
                       </div>
-                      <Button
-                        type="submit"
-                        size="lg"
-                        className="bg-primary hover:bg-primary-hover text-primary-foreground px-8 shadow-md"
-                        disabled={!documentUrl.trim()}
-                      >
-                        Start Chatting
-                        <ArrowRight className="ml-2 h-5 w-5" />
-                      </Button>
-                    </div>
-                </form>
+                  </form>
                 </TabsContent>
             </Tabs>
-
+            {suggestions && suggestions.length > 0 && (
+              <div className="shadow-2xl bg-white rounded-xl -mt-14 h-[180px] z-0 overflow-y-scroll p-4 w-4/12 ml-28">
+                <p className="text-[10px] text-primary text-left">Which of the follwiing documentations are you trying to access:</p>
+                {suggestions.map((suggestion, index) => (
+                  <div onClick={() => setDocumentUrl(suggestion.link)} key={index} className="flex cursor-pointer flex-col text-left p-2 font-semibold text-[13px]">
+                    <span>{suggestion.name}</span>
+                    <Separator />
+                  </div>
+                ))}
+              </div>
+            )}
+            {invalidMsg && <div className="-mt-10 text-red-500 flex items-center justify-center gap-x-2"> <AlertCircleIcon className="h-4 w-4"/> {invalidMsg}</div>}
             {/* Features */}
             {/* <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-4xl mx-auto">
               <div className="text-center p-6 rounded-xl bg-background border shadow-sm">

@@ -53,7 +53,7 @@ export const Header = ({ appUser, showdropdown, dropdown }: authProps) => {
                 <>
                   <Link to="/signup">
                     <Button size="sm" className="bg-primary hover:bg-primary-hover">
-                      Sign Up
+                      Get Started with Superdoc
                     </Button>
                   </Link>
                 </>

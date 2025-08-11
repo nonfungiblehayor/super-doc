@@ -1,0 +1,21 @@
+{
+  "name": "superdoc",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "repository": "https://github.com/nonfungiblehayor/super-doc.git",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "nonfungiblehayor <nonfungiblehayor.eth@gmail.com>",
+  "license": "ISC",
+  "description": "AI Documentation co-pilot",
+  "dependencies": {
+    "@google/genai": "^1.13.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "mime": "^4.0.7"
+  }
+}
