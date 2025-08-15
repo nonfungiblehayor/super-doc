@@ -14,7 +14,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const allowedOrigins = [
     "http://localhost:8080",
-    "http://localhost:4111/",
+    "https://superdoc-agent.mastra.cloud/",
 ]
 app.use(
   cors({
@@ -286,7 +286,7 @@ app.post("/fetch-html", async (req, res) => {
 app.post("/use-agent", async(req, res) => {
   const { documentation_url, user_question, links_array} = req.body
   try {
-    const response = await fetch(`http://localhost:4111/api/agents/superdocAgent/generate`, {
+    const response = await fetch(`https://superdoc-agent.mastra.cloud/api/agents/superdocAgent/generate`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
