@@ -17,16 +17,12 @@ const Signup = () => {
         console.log(error)
       })
     } else if(provider === "Google") {
-      useGoogle().then((response) => {
-        console.log(response)
+      useGoogle().then(() => {
+        
       }).catch((error) => {
         console.log(error)
       })
     }
-    toast({
-      title: `${provider} Signup`,
-      description: `This would integrate with ${provider} OAuth`,
-    });
   };
 
   return (

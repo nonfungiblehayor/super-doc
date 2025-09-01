@@ -8,6 +8,8 @@ import { useUser } from "@/context/user";
 import { AxiosClient } from "@/utils/axios-client";
 import { Loader } from "@/components/ui/loader";
 import { Separator } from "@/components/ui/separator";
+import { useSession } from "@/context/session";
+import { useCreateSession } from "@/hooks/supabase/session";
 
 const Home = () => {
   const [documentUrl, setDocumentUrl] = useState("");
@@ -21,13 +23,13 @@ const Home = () => {
     chatting: string
   }>()
   const mockup = [
-{name: 'Firebase Documentation Home', link: 'https://firebase.google.com/docs'}, 
-{name: 'Firebase Authentication', link: 'https://firebase.google.com/docs/auth'},
-{name: 'Cloud Firestore', link: 'https://firebase.google.com/docs/firestore'},
-{name: 'Firebase Realtime Database', link: 'https://firebase.google.com/docs/database'},
-{name: 'Firebase Realtime Database', link: 'https://firebase.google.com/docs/database'},
-{name: 'Firebase Realtime Database', link: 'https://firebase.google.com/docs/database'},
-{name: 'Cloud Functions for Firebase', link: 'https://firebase.google.com/docs'}
+    {name: 'Firebase Documentation Home', link: 'https://firebase.google.com/docs'}, 
+    {name: 'Firebase Authentication', link: 'https://firebase.google.com/docs/auth'},
+    {name: 'Cloud Firestore', link: 'https://firebase.google.com/docs/firestore'},
+    {name: 'Firebase Realtime Database', link: 'https://firebase.google.com/docs/database'},
+    {name: 'Firebase Realtime Database', link: 'https://firebase.google.com/docs/database'},
+    {name: 'Firebase Realtime Database', link: 'https://firebase.google.com/docs/database'},
+    {name: 'Cloud Functions for Firebase', link: 'https://firebase.google.com/docs'}
   ]
   const [suggestions, setSuggestions] = useState<{name: string, link: string}[]>()
   const [invalidMsg, setInvalidMsg] = useState<string>()
@@ -59,7 +61,7 @@ const Home = () => {
       console.log(error)
     }).finally(() => {
       setLoading(undefined)
-      setDocName(undefined)
+      // setDocName(undefined)
     })
   }
   const disabilityChecker = () => {
@@ -83,8 +85,9 @@ const Home = () => {
       sub: "just ask."
     }
   ]
-  const tabs = ["Search Docs", "Paste Link"]
+  const tabs = ["Search For Documentation"]
   const [heroText, setHerotext] = useState<number>(0)
+  const { setSessionData, sessionData } = useSession()
   useEffect(() => {
     const interval = setInterval(() => {
       setHerotext((prev) => (prev + 1) % heroTexts.length )
@@ -92,14 +95,37 @@ const Home = () => {
 
     return () => clearInterval(interval);
   }, []);
+  const createSession = useCreateSession()
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if(isError) {
+      setError(undefined)
+    }
+    setLoading((prev) => ({...prev, chatting: true}))
     if (documentUrl.trim()) {
       if(appUser) {
-        navigate(`/chat?url=${encodeURIComponent(documentUrl)}`);
+        AxiosClient.post("/fetch-html", { url: documentUrl}).then((response) => {
+         if(response.data?.length > 0) {
+          createSession.mutateAsync({user_id: appUser?.id, docs_link: documentUrl, data: response.data}).then((res) => {
+            navigate(`/chat/${res.id}`);
+          }).catch((error) => {
+            setError((prev) => ({...prev, chatting: error}))
+          })
+         } 
+        }).catch((error) => {
+          if(error.status === 500) {
+            setError((prev) => ({...prev, search: "An error occured try again"}))
+          } else {
+            setError((prev) => ({...prev, search: error?.message}))
+          }
+        }).finally(() => {
+          setLoading(undefined)
+        })
       } else {
         navigate("/signup")
       }
+    } else {
+      useSearchDoc()
     }
   };
 
@@ -112,7 +138,7 @@ const Home = () => {
         <div className="relative container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
           <div className="text-center max-w-4xl mx-auto">
             {/* Badge */}
-            <div className="inline-flex items-center rounded-full border px-3 py-1 text-sm font-medium mb-8 bg-primary-light border-primary/20">
+            <div onClick={() => console.log(sessionData)} className="inline-flex items-center rounded-full border px-3 py-1 text-sm font-medium mb-8 bg-primary-light border-primary/20">
               <Sparkles className="h-4 w-4 mr-2 text-primary" />
                 Documentation Copilot
             </div>
@@ -135,7 +161,6 @@ const Home = () => {
             <Tabs defaultValue={tabs[0]}>
               <TabsList className="gap-x-6 text-primary">
                 <TabsTrigger value={tabs[0]}>{tabs[0]}</TabsTrigger>
-                <TabsTrigger value={tabs[1]}>{tabs[1]}</TabsTrigger>
               </TabsList>
                 <TabsContent value={tabs[0]} className="z-10">
                 <form onSubmit={handleSubmit} className="flex flex-col z-10 space-y-1 max-w-2xl mx-auto mb-12">
@@ -145,56 +170,31 @@ const Home = () => {
                             type="text"
                             placeholder="Search documentation by name…..."
                             value={documentUrl !== "" ? documentUrl : docName}
-                            onChange={(e) => documentUrl !== "" ? setDocumentUrl(e.target.value) : setDocName(e.target.value)}
-                            className={`border-0 bg-transparent text-lg placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0`}
+                            onChange={(e) => documentUrl !== "" ? (setDocumentUrl(e.target.value), isError?.search && setError(undefined)) : (setDocName(e.target.value), isError?.search && setError(undefined))}
+                            className={`${isError ? "border-2 border-red-500" : ""} border-0 bg-transparent text-lg placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0`}
                             required
                           />
                         </div>
                         <Button
                           type="submit"
-                          onClick={() => documentUrl ? console.log(10) : useSearchDoc()}
                           size="lg"
                           className="bg-primary hover:bg-primary-hover text-primary-foreground px-8 shadow-md"
-                          disabled={disabilityChecker() || isLoading?.search}
+                          disabled={disabilityChecker() || isLoading?.search || isLoading?.chatting}
                         >
-                          {documentUrl ? "Start Chatting" : <>{isLoading?.search ? <Loader /> : "Search docs"}</>}
+                          {isLoading?.chatting ? <Loader /> : documentUrl ? "Start Chatting" : <>{isLoading?.search ? <Loader /> : "Search docs"}</>}
                           <ArrowRight className="ml-2 h-5 w-5" />
                         </Button>
                       </div>
                       {isError?.search && <span className="text-red-500 text-[12px] self-start text-left font-semibold">{isError?.search}</span>}
+                      {isError?.chatting && <span className="text-red-500 text-[12px] self-start text-left font-semibold">{isError?.chatting}</span>}
                 </form>
-                </TabsContent>
-                <TabsContent value={tabs[1]} className="z-10">
-                  <form onSubmit={handleSubmit} className="max-w-2xl z-10 mx-auto mb-12 z-[9999]">
-                      <div className="flex flex-col sm:flex-row gap-4 p-2 bg-background z-10 rounded-xl border shadow-lg">
-                        <div className="flex-1">
-                          <Input
-                            type="url"
-                            placeholder="Paste documentation URL here..."
-                            value={documentUrl}
-                            onChange={(e) => setDocumentUrl(e.target.value)}
-                            className="border-0 bg-transparent text-lg placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0"
-                            required
-                          />
-                        </div>
-                        <Button
-                          type="submit"
-                          size="lg"
-                          className="bg-primary hover:bg-primary-hover text-primary-foreground px-8 shadow-md"
-                          disabled={!documentUrl.trim()}
-                        >
-                          Start Chatting
-                          <ArrowRight className="ml-2 h-5 w-5" />
-                        </Button>
-                      </div>
-                  </form>
                 </TabsContent>
             </Tabs>
             {suggestions && suggestions.length > 0 && (
               <div className="shadow-2xl bg-white rounded-xl -mt-14 h-[180px] z-0 overflow-y-scroll p-4 w-4/12 ml-28">
                 <p className="text-[10px] text-primary text-left">Which of the follwiing documentations are you trying to access:</p>
                 {suggestions.map((suggestion, index) => (
-                  <div onClick={() => setDocumentUrl(suggestion.link)} key={index} className="flex cursor-pointer flex-col text-left p-2 font-semibold text-[13px]">
+                  <div onClick={() => (setDocumentUrl(suggestion.link), setSuggestions([]))} key={index} className="flex cursor-pointer flex-col text-left p-2 font-semibold text-[13px]">
                     <span>{suggestion.name}</span>
                     <Separator />
                   </div>

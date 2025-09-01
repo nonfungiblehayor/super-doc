@@ -1,11 +1,13 @@
 import express from 'express';
 import dotenv from 'dotenv';
+import multer from 'multer';
 import { GoogleGenAI } from '@google/genai';
 import cors from 'cors';
 import axios from 'axios';
 import puppeteer from 'puppeteer';
 import * as cheerio from "cheerio";
-import { findAnswer, findDoc, findUrl } from './instructions.js';
+import { findAnswer, findDoc, findUrl, transcribeAudio } from './instructions.js';
+import JSON5 from "json5";
 
 
 dotenv.config();
@@ -32,7 +34,7 @@ app.use(express.json());
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
-
+const upload = multer({ storage: multer.memoryStorage() });
 const model = 'gemini-2.5-pro';
 async function fetchHTML(url) {
   try {
@@ -162,13 +164,18 @@ app.post('/find-doc', async (req, res) => {
     const match = resultText.match(/```json([\s\S]*?)```/);
     let result;
     if (match) {
-      result = JSON.parse(match[1].trim());
+      result = JSON5.parse(match[1].trim());
     } else {
-      const cleaned = resultText.replace(/```json|```/g, "").trim();
-      result = JSON.parse(cleaned);
+      if(resultText !== "") {
+        const cleaned = resultText.replace(/```json|```/g, "").trim()
+        result = JSON5.parse(cleaned);
+      } else {
+        result = null
+      }
     }
     res.json({ result });
   } catch (error) {
+    console.log(error)
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -285,8 +292,9 @@ app.post("/fetch-html", async (req, res) => {
 
 app.post("/use-agent", async(req, res) => {
   const { documentation_url, user_question, links_array} = req.body
+  //https://superdoc-agent.mastra.cloud/api
   try {
-    const response = await fetch(`https://superdoc-agent.mastra.cloud/api/agents/superdocAgent/generate`, {
+    const response = await fetch(`http://localhost:4111/api/agents/superdocAgent/generate`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -306,19 +314,65 @@ app.post("/use-agent", async(req, res) => {
     if (!response.ok) {
       const raw = await response.text()
       const error = JSON.parse(raw)
+      console.log("316", error)
       throw new Error(error);
     } 
     if(response.ok) {
       const raw = await response.text()
       const data = JSON.parse(raw)
+      console.log("322",data)
       const answer = data?.response?.body?.candidates[0]?.content?.parts[0]?.text
+      console.log("324",answer)
       res.json({ answer })
     }
   } catch (error) {
-    console.error(error);
+    console.error("328",error);
     res.status(500).json({ error: "An error occured try again later" });
   }
 })
+
+app.post('/transcribe', upload.single('audio'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No audio file uploaded' });
+    }
+    const audioBase64 = req.file.buffer.toString('base64');
+    const mimeType = req.file.mimetype;
+
+    const config = {
+      thinkingConfig: { thinkingBudget: -1 },
+      systemInstruction: [{ text: transcribeAudio }],
+    };
+
+    const contents = [
+      {
+        role: 'user',
+        parts: [
+          {
+            inlineData: { data: audioBase64, mimeType },
+          },
+        ],
+      },
+    ];
+
+    const response = await ai.models.generateContentStream({
+      model,
+      config,
+      contents,
+    });
+
+    let transcription = '';
+    for await (const chunk of response) {
+      transcription += chunk.text;
+    }
+
+    res.json({ transcription });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to transcribe audio' });
+  }
+});
+
 
 app.listen(PORT, () => {
   console.log(`Superdoc API running on http://localhost:${PORT}`);
