@@ -290,46 +290,82 @@ app.post("/fetch-html", async (req, res) => {
   }
 });
 
-app.post("/use-agent", async(req, res) => {
-  const { documentation_url, user_question, links_array} = req.body
-  //https://superdoc-agent.mastra.cloud/api
+app.post("/get-answer-from-docs", async (req, res) => {
   try {
-    const response = await fetch(`http://localhost:4111/api/agents/superdocAgent/generate`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(
-        {
-        role: "user", 
-        messages: [
-          {
-            role: "user",
-            content: JSON.stringify({ documentation_url, user_question, links_array })
-          }
-        ]
-       }
-      )
-    })
-    if (!response.ok) {
-      const raw = await response.text()
-      const error = JSON.parse(raw)
-      console.log("316", error)
-      throw new Error(error);
-    } 
-    if(response.ok) {
-      const raw = await response.text()
-      const data = JSON.parse(raw)
-      console.log("322",data)
-      const answer = data?.response?.body?.candidates[0]?.content?.parts[0]?.text
-      console.log("324",answer)
-      res.json({ answer })
+    const { documentation_url, user_question, links_array } = req.body;
+    if (!user_question || !documentation_url) {
+      res.write(`event: error\ndata: ${JSON.stringify({ message: "User question and documentation url are required" })}\n\n`);
+      return res.end();
     }
+
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.setHeader("Access-Control-Allow-Origin", "http://localhost:8080");
+    res.flushHeaders();
+
+    const send = (event, data) => {
+      res.write(`event: ${event}\n`);
+      res.write(`data: ${JSON.stringify(data)}\n\n`);
+    };
+
+    send("log", { message: "Step 1: Finding the relevant URL..." });
+
+    const findUrlContents = [{
+      role: "user",
+      parts: [{ 
+        text: `link_arrays: ${JSON.stringify(links_array, null, 2)}\n\nuser_question: "${user_question}"\n\ndocumentation_url: "${documentation_url}"` 
+      }],
+    }];
+
+    const findUrlResponse = await ai.models.generateContent({
+      model,
+      config: { systemInstruction: [{ text: `${findUrl}` }] },
+      contents: findUrlContents,
+    });
+
+    const specific_page_url = findUrlResponse?.candidates[0].content.parts[0].text.trim();
+
+    if (!specific_page_url) {
+      send("error", { message: "Model failed to find a specific URL." });
+      return res.end();
+    }
+
+    send("log", { message: `Step 1 complete. Found URL: ${specific_page_url}` });
+
+    await new Promise(resolve => setTimeout(resolve, 31000)); // rate limit
+
+    send("log", { message: "Step 2: Generating answer from the URL..." });
+
+    const answerContents = [{
+      role: "user",
+      parts: [{ text: `Using the content from the URL ${specific_page_url}, please answer the following question: "${user_question}"` }],
+    }];
+
+    const responseStream = await ai.models.generateContentStream({
+      model,
+      config: { tools: [{ urlContext: {} }], systemInstruction: [{ text: findAnswer }] },
+      contents: answerContents,
+    });
+
+    for await (const chunk of responseStream) {
+      const text = chunk?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (text) send("answer", { text });
+    }
+
+    send("done", { message: "Completed." });
+    res.end();
+
   } catch (error) {
-    console.error("328",error);
-    res.status(500).json({ error: "An error occured try again later" });
+    console.error("Error in combined endpoint:", error);
+    if (!res.headersSent) {
+      res.write(`event: error\ndata: ${JSON.stringify({ message: error.message })}\n\n`);
+      res.end();
+    } else {
+      throw error
+    }
   }
-})
+});
 
 app.post('/transcribe', upload.single('audio'), async (req, res) => {
   try {

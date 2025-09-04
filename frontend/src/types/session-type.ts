@@ -18,3 +18,11 @@ export type sessionServer = {
   share?: boolean,
   data: any,
 }
+export type conversationType = {
+  id?: string,
+  user_id: string,
+  question: string,
+  response: string,
+  created_at?: string,
+  session_id: string
+}
