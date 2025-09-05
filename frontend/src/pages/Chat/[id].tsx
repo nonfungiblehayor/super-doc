@@ -18,6 +18,7 @@ import { getConversations, useCreateConversation, useDeleteConversation, useUpda
 import MarkdownRenderer from "@/components/markdown";
 import { Textarea } from "@/components/ui/textarea";
 import { conversationType } from "@/types/session-type";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 interface Message {
   id?: string;
@@ -50,6 +51,7 @@ const Chat = () => {
   const { data: conversations, isLoading: isLoadingConversation } = getConversations(session?.id)
   const { isRecording, audioURL, deleteRecording, analyser, startRecording, stopRecording } =
   useVoiceRecorder();
+  const [ isMobile, setMobile ] = useState<boolean>()
   const createConversation = useCreateConversation()
   const deleteConversation = useDeleteConversation()
   const updateConversation = useUpdateConversation()
@@ -89,10 +91,6 @@ const Chat = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [sessionMore]);
-  
-
-  
-
   const handleDelete = async(id: string) => {
     setLoader((prev) => ({...prev, delete: {loading: true, id: id}}))
     deleteConversation.mutateAsync(id).then(() => {
@@ -337,11 +335,11 @@ const Chat = () => {
     <div className="h-[98%] flex flex-col bg-background">
       <div className="flex-1 h-full flex">
         {/* Chat Section */}
-        <div className="flex-1 w-3/12 flex flex-col">
+        <div className="flex-1 w-full sm:w-3/12 flex flex-col">
           {/* Document URL Header */}
                 <div className="border-b flex w-full items-center h-[75px] justify-between p-4 bg-background/95 backdrop-blur">
                   <div className="flex items-center gap-3">
-                    <Badge variant="secondary" className="px-3 py-1">
+                    <Badge variant="secondary" className="px-3 hidden sm:flex py-1">
                       Documentation
                     </Badge>
                     <a
@@ -366,7 +364,7 @@ const Chat = () => {
                     </div>
                 )}
                 {session && (
-                <div className="space-y-4 flex flex-col h-5/6 p-6 pb-14 overflow-y-scroll max-w-4xl">
+                <div className="space-y-4 flex flex-col h-5/6 p-6 pb-14 overflow-y-scroll w-full sm:max-w-4xl">
                 {messages && messages?.length > 0 && messages?.map((message) => (
                   <div key={message.id} className={`flex w-full items-center gap-3 justify-start`}>
                     <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center shrink-0">
@@ -375,7 +373,7 @@ const Chat = () => {
                       <div
                       className={`w-full rounded-lg p-4 bg-muted cursor-pointer transition-all shadow-md
                       ${selectedResponse?.id === message?.id ? "ring-2 ring-primary" : ""}`}
-                      onClick={() => message.response ? setSelectedResponse(message) : toast.error("An error occured, no response to preview")}
+                      onClick={() => message.response ? (setSelectedResponse(message), setMobile(true)) : toast.error("An error occured, no response to preview")}
                       >
                         <p className="whitespace-pre-wrap">{message?.question}</p>
                         <div className="flex items-center text-black justify-end gap-1 mt-4">
@@ -425,7 +423,7 @@ const Chat = () => {
                     </div>
                 )}
                 {/* Input Form */}
-                <div className="border-t fixed w-[41.5%] bottom-4 p-4 bg-background/95 backdrop-blur">
+                <div className="border-t fixed w-[100%] sm:w-[41.5%] bottom-4 p-4 bg-background/95 backdrop-blur">
                   <form onSubmit={handleSubmit} className="max-w-4xl mx-auto">
                     <div className="flex gap-3">
                         {isRecording && (
@@ -482,7 +480,7 @@ const Chat = () => {
 
         {/* Preview Section */}
         
-        <div className="w-7/12 h-full flex flex-col">
+        <div className="w-7/12 hidden h-full sm:flex flex-col">
           <div className="p-4 border-b bg-background/95 backdrop-blur">
             <h3 className="font-semibold text-foreground">Response Preview</h3>
             <p className="text-sm text-muted-foreground">Click on any AI response to preview it here</p>
@@ -523,6 +521,48 @@ const Chat = () => {
             )}
         </div>
       </div>
+      {selectedResponse && (
+        <div className="flex sm:hidden">
+        <Dialog open={isMobile} onOpenChange={setMobile}>
+          <DialogContent className="h-5/6">
+            {selectedResponse?.response ? 
+            <div className="prose h-[90%] flex flex-col overflow-y-scroll justify-between prose-sm max-w-none dark:prose-invert">
+                <MarkdownRenderer content={selectedResponse?.response} />
+                <div className="flex fixed bottom-8 w-[55%] items-center px-4 justify-between">
+                  <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="sm" className="h-8 px-3">
+                      <ThumbsUp className="h-3 w-3 mr-1" />
+                      Helpful
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-8 px-3">
+                      <ThumbsDown className="h-3 w-3 mr-1" />
+                      Not helpful
+                    </Button>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => copyToClipboard(selectedResponse?.response)}
+                  >
+                    <Copy className="h-3 w-3 mr-1" />
+                    Copy
+                  </Button>
+                </div>
+            </div> 
+            :
+            <div className="flex items-center justify-center h-full text-center">
+                <div className="space-y-2">
+                  <Bot className="h-12 w-12 text-muted-foreground mx-auto opacity-50" />
+                  <p className="text-muted-foreground">
+                    AI responses will appear here for detailed preview
+                  </p>
+                </div>
+            </div>              
+            }
+          </DialogContent>
+        </Dialog>
+        </div>
+      )}
     </div>
   );
 };

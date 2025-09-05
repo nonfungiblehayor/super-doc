@@ -164,7 +164,7 @@ const Home = () => {
                 <TabsTrigger value="history"> <History className="w-6 h-6"/> </TabsTrigger>
               </TabsList>
                 <TabsContent value={tabs[0]} className="z-10">
-                  <form onSubmit={handleSubmit} className="flex flex-col z-10 space-y-1 max-w-2xl mx-auto mb-12">
+                  <form onSubmit={handleSubmit} className="flex mt-4 flex-col z-10 space-y-1 max-w-2xl mx-auto mb-12">
                         <div className={`flex flex-col sm:flex-row gap-4 p-2 bg-background z-10 rounded-xl border shadow-lg ${isError?.search && "border-[1px] border-red-500"}`}>
                           <div className="flex-1">
                             <Input
@@ -206,38 +206,6 @@ const Home = () => {
               </div>
             )}
             {invalidMsg && <div className="-mt-10 text-red-500 flex items-center justify-center gap-x-2"> <AlertCircleIcon className="h-4 w-4"/> {invalidMsg}</div>}
-            {/* Features */}
-            {/* <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-4xl mx-auto">
-              <div className="text-center p-6 rounded-xl bg-background border shadow-sm">
-                <div className="h-12 w-12 rounded-lg bg-primary-light flex items-center justify-center mx-auto mb-4">
-                  <BookOpen className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">Any Documentation</h3>
-                <p className="text-muted-foreground">
-                  Works with any online documentation, guides, or knowledge base
-                </p>
-              </div>
-
-              <div className="text-center p-6 rounded-xl bg-background border shadow-sm">
-                <div className="h-12 w-12 rounded-lg bg-primary-light flex items-center justify-center mx-auto mb-4">
-                  <MessageSquare className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">Natural Conversations</h3>
-                <p className="text-muted-foreground">
-                  Ask questions in plain English and get contextual answers
-                </p>
-              </div>
-
-              <div className="text-center p-6 rounded-xl bg-background border shadow-sm">
-                <div className="h-12 w-12 rounded-lg bg-primary-light flex items-center justify-center mx-auto mb-4">
-                  <Sparkles className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">AI-Powered</h3>
-                <p className="text-muted-foreground">
-                  Advanced AI understands context and provides accurate responses
-                </p>
-              </div>
-            </div> */}
           </div>
         </div>
       </main>

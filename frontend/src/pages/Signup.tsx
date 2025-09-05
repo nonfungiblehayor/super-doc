@@ -1,26 +1,27 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Github, Mail } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import { useGithub, useGoogle } from "@/hooks/supabase/auth";
+import { useState } from "react";
+import { Loader } from "@/components/ui/loader";
+import toast from "react-hot-toast";
 
 const Signup = () => {
-  const navigate = useNavigate();
-  const { toast } = useToast();
-
+  const [isLoading, setLoader] = useState<{state: boolean, id: string}>()
   const handleSocialSignup = (provider: string) => {
+    setLoader((prev) => ({...prev, state: true, id: provider}))
     if(provider === "GitHub") {
-      useGithub().then((response) => {
-        console.log(response)
-      }).catch((error) => {
-        console.log(error)
+      useGithub().catch((error) => {
+        toast.error(error?.message || "an error occured")
+      }).finally(() => {
+        setLoader(undefined)
       })
     } else if(provider === "Google") {
-      useGoogle().then(() => {
-        
-      }).catch((error) => {
+      useGoogle().catch((error) => {
         console.log(error)
+      }).finally(() => {
+        setLoader(undefined)
       })
     }
   };
@@ -41,30 +42,28 @@ const Signup = () => {
             <div className="space-y-3">
               <Button
                 variant="outline"
+                disabled={isLoading?.state}
                 className="w-full h-11"
                 onClick={() => handleSocialSignup("GitHub")}
               >
+                {isLoading?.id === "Github" && isLoading?.state ? <Loader /> : 
+                <>
                 <Github className="h-5 w-5 mr-2" />
                 Continue with GitHub
+                </>
+                }
               </Button>
-              
               <Button
                 variant="outline"
+                disabled={isLoading?.state}
                 className="w-full h-11"
                 onClick={() => handleSocialSignup("Google")}
               >
+                {isLoading?.id === "Google" && isLoading?.state ? <Loader /> :   <>
                 <Mail className="h-5 w-5 mr-2" />
                 Continue with Google
+                </>}
               </Button>
-            </div>
-            <div className="text-center text-sm">
-              <span className="text-muted-foreground">Already have an account? </span>
-              <Link
-                to="/login"
-                className="text-primary hover:text-primary-hover font-medium"
-              >
-                Sign in
-              </Link>
             </div>
           </CardContent>
         </Card>

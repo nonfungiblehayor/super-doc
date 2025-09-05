@@ -33,7 +33,7 @@ export const useDeleteUser = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async(user_id: string) => {
-            const { error } = await supabaseAdmin.from("user").delete().eq("id", user_id)
+            const { error } = await supabaseAdmin.from("users").delete().eq("id", user_id)
             if(error) throw error
         },
         onSuccess: (_, variables) => {

@@ -7,7 +7,6 @@ import HistoryDropdown from "./Historydropdown"
 const Layout = ({children}: {children: ReactNode}) => {
     const { appUser } = useUser()
     const [isDropdown, setDropdown] = useState<{details: boolean}>()
-    const historyRef = useRef<HTMLDivElement | null>(null)
     const profileRef = useRef<HTMLDivElement | null>(null)
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {

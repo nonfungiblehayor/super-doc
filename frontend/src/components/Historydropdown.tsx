@@ -5,7 +5,7 @@ import { Separator } from "./ui/separator"
 const HistoryDropdown = ({user_id}: {user_id: string}) => {
     const { data: history, error: historyError, isLoading: historyLoading} = getSessions(user_id)
     return (
-        <div className="w-7/12 m-auto h-[180px] bg-white overflow-y-scroll px-4 py-[7px] flex flex-col gap-y-2 rounded-xl shadow-2xl">
+        <div className="sm:w-7/12 m-auto h-[250px] sm:h-[180px] bg-white overflow-y-scroll px-4 py-[7px] flex flex-col gap-y-2 rounded-xl shadow-2xl">
             {history && history?.length > 0 && (
                 <div className="py-2">
                     {history?.map((history) => (
