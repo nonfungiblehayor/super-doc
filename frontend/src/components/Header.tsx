@@ -7,8 +7,8 @@ import { Dispatch, SetStateAction } from "react";
 
 type authProps = {
   appUser: User,
-  showdropdown: Dispatch<SetStateAction<{details: boolean, history: boolean}>>,
-  dropdown: {details: boolean, history: boolean}
+  showdropdown: Dispatch<SetStateAction<{details: boolean}>>,
+  dropdown: {details: boolean}
 }
 
 export const Header = ({ appUser, showdropdown, dropdown }: authProps) => {
@@ -36,19 +36,11 @@ export const Header = ({ appUser, showdropdown, dropdown }: authProps) => {
                     >
                       <CreditCard className="h-4 w-4 mr-2" />
                       Get Credits
-                    </Button>
+                    </Button>                  
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => showdropdown((prev) => ({...prev, history: !dropdown?.history}))}
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      <History className="w-4 h-4"/>
-                    </Button>                    
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => showdropdown((prev) => ({...prev, history: !dropdown?.details}))}
+                      onClick={() => showdropdown((prev) => ({...prev, details: !dropdown?.details}))}
                       className="text-muted-foreground hover:text-foreground"
                     >
                       <User2 className="w-4 h-4"/>

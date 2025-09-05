@@ -38,6 +38,7 @@ const Chat = () => {
     retry: {loading: boolean, id: string}
     deleteSession: boolean
   }>()
+  const menuRef = useRef<HTMLDivElement | null>(null);
   const [stage, setStage] = useState<string>()
   const [selectedResponse, setSelectedResponse] = useState<conversationType>();
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -71,49 +72,27 @@ const Chat = () => {
         navigate("/signup")
     } 
   }, [appUser, loadingUser])
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setSessionMore(false);
+      }
+    }
+  
+    if (sessionMore) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+  
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [sessionMore]);
+  
 
   
-  const handleAudio = async() => {
-    setIsLoading(true)
-    if (!audioURL) return;
-    const blob = await fetch(audioURL).then(res => res.blob());
-    const formData = new FormData();
-    formData.append('audio', blob, 'recording.webm');
-    AxiosClient.post(`/transcribe`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },      
-    }).then((response) => {
-      setInputValue(response.data?.transcription)
-      deleteRecording()
-    }).catch((error) => {
-      if(error?.response?.data?.error) {
-        const errorMessage: Message = {
-          id: "error",
-          type: "user",
-          user_id: appUser?.id,
-          session_id: session?.id,
-          question: error?.response?.data?.error,
-          response: "",
-          created_at: "",
-        }
-        setMessages((prev) => ([...prev, errorMessage]))
-      } else {
-        const errorMessage: Message = {
-          id: "error",
-          type: "user",
-          question: "An error occured try again !!!",
-          response: "",
-          user_id: appUser?.id,
-          session_id: session?.id,
-          created_at: "",
-        }
-        setMessages((prev) => ([...prev, errorMessage]))
-      }
-    }).finally(() => {
-      setIsLoading(false)
-    })
-  }
+
   const handleDelete = async(id: string) => {
     setLoader((prev) => ({...prev, delete: {loading: true, id: id}}))
     deleteConversation.mutateAsync(id).then(() => {
@@ -132,7 +111,6 @@ const Chat = () => {
   }
   const baseUrl = import.meta.env.VITE_BASE_URL
   const askAi = async(question: string) => {
-    setIsLoading(true);
     const payload = {
       documentation_url: session.docs_link,
       user_question: question,
@@ -171,7 +149,7 @@ const Chat = () => {
              createConversation.mutateAsync({
                 session_id: session?.id,
                 user_id: appUser?.id,
-                question: inputValue,
+                question: question,
                 response: fullAnswer
               }).then((res) => {
                 const newResponse: Message = {
@@ -183,14 +161,20 @@ const Chat = () => {
                   response: res.response,
                   created_at: res?.created_at,
                 }  
+                if(audioURL) {
+                  deleteRecording()
+                }
                 setInputValue("")
                 setSelectedResponse(res)
+                setStage("")
                 setMessages((prev) => ([...prev, newResponse]))
               }).catch((err) => {
                 toast.error("an error occured")
                 console.log(err)
               }).finally(() => {
                  setIsLoading(false);
+                 setInputValue("")
+                 setStage("")
               })
             }
           })
@@ -199,6 +183,7 @@ const Chat = () => {
     } catch (error) {
       toast.error("An error occured try again")
       setStage("")
+      setInputValue("")
       setIsLoading(undefined)
       console.log(error)
     }
@@ -266,8 +251,51 @@ const Chat = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputValue.trim()) return;
+    setIsLoading(true)
     askAi(inputValue)
   };
+  const handleAudio = async() => {
+    setIsLoading(true)
+    setStage("Transcribing Audio")
+    if (!audioURL) return;
+    const blob = await fetch(audioURL).then(res => res.blob());
+    const formData = new FormData();
+    formData.append('audio', blob, 'recording.webm');
+    AxiosClient.post(`/transcribe`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },      
+    }).then((response) => {
+      if(response.data?.transcription) {
+        setInputValue(response.data?.transcription)
+        askAi(response.data?.transcription)
+      }
+    }).catch((error) => {
+      if(error?.response?.data?.error) {
+        const errorMessage: Message = {
+          id: "error",
+          type: "user",
+          user_id: appUser?.id,
+          session_id: session?.id,
+          question: error?.response?.data?.error,
+          response: "",
+          created_at: "",
+        }
+        setMessages((prev) => ([...prev, errorMessage]))
+      } else {
+        const errorMessage: Message = {
+          id: "error",
+          type: "user",
+          question: "An error occured try again !!!",
+          response: "",
+          user_id: appUser?.id,
+          session_id: session?.id,
+          created_at: "",
+        }
+        setMessages((prev) => ([...prev, errorMessage]))
+      }
+    })
+  }
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
   };
@@ -331,36 +359,35 @@ const Chat = () => {
                   </Button>
                 </div>
                 {sessionMore && (
-                      <div className="self-end flex flex-col gap-y-2 relative p-2 bg-white z-[9999] mr-2 rounded-xl shadow-2xl -mb-32 -mt-6 ">
-                          <Button onClick={handleShare} className="bg-transparent w-full text-black hover:bg-transparent border-b-2">Share session <Share2 /></Button>
-                          <Button onClick={() => navigate("/")} className="bg-transparent text-red-500 hover:bg-transparent border-b-2">Close session <X /></Button>
-                          <Button disabled={isLoader?.deleteSession} onClick={handleDeleteSession} className="bg-transparent text-red-500 hover:bg-transparent border-b-2">{isLoader?.deleteSession ? "Deleting session" :  "Delete session"} <Trash /></Button>
-                      </div>
-                )}
-
-                {session && (
-                <div className="space-y-4 flex flex-col h-5/6 p-4 overflow-y-scroll max-w-4xl">
-                {messages && messages?.length > 0 && messages?.map((message) => (
-                <div key={message.id} className={`flex w-full items-center gap-3 justify-start`}>
-                  <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center shrink-0">
-                    <User className="h-4 w-4 text-primary-foreground"/>
-                  </div>
-                    <div
-                    className={`w-full rounded-lg p-4 bg-muted cursor-pointer transition-all shadow-md
-                    ${selectedResponse?.id === message?.id ? "ring-2 ring-primary" : ""}`}
-                    onClick={() => message.response ? setSelectedResponse(message) : toast.error("An error occured, no response to preview")}
-                    >
-                      <p className="whitespace-pre-wrap">{message?.question}</p>
-                      <div className="flex items-center text-black justify-end gap-1 mt-4">
-                          <Button onClick={() => retryAi(message)} disabled={isLoader?.retry?.loading || isLoading} className="bg-transparent hover:bg-transparent w-4 h-4">
-                            {isLoader?.retry?.loading && isLoader?.retry?.id === message?.id ? <Loader2 className="animate-spin text-primary w-4 h-4" /> :  <RefreshCcw className="text-black"/>}
-                          </Button>
-                          <Button onClick={() => handleDelete(message?.id)} disabled={isLoader?.delete?.loading || isLoading} className="bg-transparent hover:bg-transparent w-4 h-4">
-                            {isLoader?.delete?.loading && isLoader?.delete?.id === message?.id ? <Loader2 className="animate-spin text-primary w-4 h-4" /> : <Trash className="text-red-500"/>}
-                          </Button>
-                      </div>
+                    <div ref={menuRef} className="self-end flex flex-col gap-y-2 relative p-2 bg-white z-[9999] mr-2 rounded-xl shadow-2xl -mb-32 -mt-6 ">
+                      <Button onClick={handleShare} className="bg-transparent w-full text-black hover:bg-transparent border-b-2">Share session <Share2 /></Button>
+                      <Button onClick={() => navigate("/")} className="bg-transparent text-red-500 hover:bg-transparent border-b-2">Close session <X /></Button>
+                      <Button disabled={isLoader?.deleteSession} onClick={handleDeleteSession} className="bg-transparent text-red-500 hover:bg-transparent border-b-2">{isLoader?.deleteSession ? "Deleting session" :  "Delete session"} <Trash /></Button>
                     </div>
-                </div>
+                )}
+                {session && (
+                <div className="space-y-4 flex flex-col h-5/6 p-6 pb-14 overflow-y-scroll max-w-4xl">
+                {messages && messages?.length > 0 && messages?.map((message) => (
+                  <div key={message.id} className={`flex w-full items-center gap-3 justify-start`}>
+                    <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center shrink-0">
+                      <User className="h-4 w-4 text-primary-foreground"/>
+                    </div>
+                      <div
+                      className={`w-full rounded-lg p-4 bg-muted cursor-pointer transition-all shadow-md
+                      ${selectedResponse?.id === message?.id ? "ring-2 ring-primary" : ""}`}
+                      onClick={() => message.response ? setSelectedResponse(message) : toast.error("An error occured, no response to preview")}
+                      >
+                        <p className="whitespace-pre-wrap">{message?.question}</p>
+                        <div className="flex items-center text-black justify-end gap-1 mt-4">
+                            <Button onClick={() => retryAi(message)} disabled={isLoader?.retry?.loading || isLoading} className="bg-transparent hover:bg-transparent w-4 h-4">
+                              {isLoader?.retry?.loading && isLoader?.retry?.id === message?.id ? <Loader2 className="animate-spin text-primary w-4 h-4" /> :  <RefreshCcw className="text-black"/>}
+                            </Button>
+                            <Button onClick={() => handleDelete(message?.id)} disabled={isLoader?.delete?.loading || isLoading} className="bg-transparent hover:bg-transparent w-4 h-4">
+                              {isLoader?.delete?.loading && isLoader?.delete?.id === message?.id ? <Loader2 className="animate-spin text-primary w-4 h-4" /> : <Trash className="text-red-500"/>}
+                            </Button>
+                        </div>
+                      </div>
+                  </div>
                 ))}
                 {messages && messages?.length === 0 && !isLoadingConversation && !inputValue && (
                   <div className="flex z-[0] flex-col justify-center items-cemter">
@@ -415,13 +442,6 @@ const Chat = () => {
                           className="flex-1 resize-none overflow-y-auto"
                           rows={1}
                         />
-                          //   <Input
-                          //   value={inputValue}
-                          //   onChange={(e) => setInputValue(e.target.value)}
-                          //   placeholder="Ask a question about the documentation..."
-                          //   className="flex-1"
-                          //   disabled={isLoading || isLoadingSession}
-                          // />
                         )}
                         {audioURL && !isRecording && (
                           <div className="w-[90%]">
@@ -508,52 +528,3 @@ const Chat = () => {
 };
 
 export default Chat;
-
-  // AxiosClient.post("/use-agent", { 
-    //   documentation_url: session.docs_link,
-    //   user_question: inputValue,
-    //   links_array: session.data
-    //  }).then((response) => {
-    //   if(response.data) {
-    //     console.log(response.data)
-    //   }
-    //  }).catch((error) => {
-    //   console.log(error)
-    //   const errorMessage: Message = {
-    //     id: "welcome",
-    //     type: "assistant",
-    //     content: `${error}`,
-    //     timestamp: new Date(),
-    //   };
-    //   setMessages([errorMessage]);
-    //   setError(error)
-    //   toast.error(error)
-    //  }).finally(() => {
-    //   setIsLoading(false)
-    //   setInputValue("")
-    //  })
-
-    // const userMessage: Message = {
-    //   id: Date.now().toString(),
-    //   type: "user",
-    //   content: inputValue,
-    //   timestamp: new Date(),
-    // };
-
-    // setMessages((prev) => [...prev, userMessage]);
-    // setInputValue("");
-    // setIsLoading(true);
-
-    // // Simulate AI response
-    // setTimeout(() => {
-    //   const assistantMessage: Message = {
-    //     id: (Date.now() + 1).toString(),
-    //     type: "assistant",
-    //     content: `Based on the documentation, here's what I found about "${inputValue}":\n\nThis is a simulated response hat would normally come from AI analysis of the documentation.  hat would normally come from AI analysis of the documentation.  hat would normally come from AI analysis of the documentation. hat would normally come from AI analysis of the documentation. hat would normally come from AI analysis of the documentation. hat would normally come from AI analysis of the documentation. hat would normally come from AI analysis of the documentation. hat would normally come from AI analysis of the documentation.  that would normally come from AI analysis of the documentation. The AI would provide contextual, accurate answers based on the content of the documentation you provided.Based on the documentation, here's what I found about "${inputValue}":\n\nThis is a simulated response that would normally come from AI analysis of the documentation. The AI would provide contextual, accurate answers based on the content of the documentation you provided.Based on the documentation, here's what I found about "${inputValue}":\n\nThis is a simulated response that would normally come from AI analysis of the documentation. The AI would provide contextual, accurate answers based on the content of the documentation you provided.Based on the documentation, here's what I found about "${inputValue}":\n\nThis is a simulated response that would normally come from AI analysis of the documentation. The AI would provide contextual, accurate answers based on the content of the documentation you provided.Based on the documentation, here's what I found about "${inputValue}":\n\nThis is a simulated response that would normally come from AI analysis of the documentation. The AI would provide contextual, accurate answers based on the content of the documentation you provided.Based on the documentation, here's what I found about "${inputValue}":\n\nThis is a simulated response that would normally come from AI analysis of the documentation. The AI would provide contextual, accurate answers based on the content of the documentation you provided.`,
-    //     timestamp: new Date(),
-    //   };
-
-    //   setMessages((prev) => [...prev, assistantMessage]);
-    //   setSelectedResponse(assistantMessage.content);
-    //   setIsLoading(false);
-    // }, 1500);

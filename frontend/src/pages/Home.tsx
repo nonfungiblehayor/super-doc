@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
-import { AlertCircleIcon, ArrowRight, Sparkles } from "lucide-react";
+import { AlertCircleIcon, ArrowRight, History, Sparkles } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUser } from "@/context/user";
 import { AxiosClient } from "@/utils/axios-client";
@@ -10,6 +10,7 @@ import { Loader } from "@/components/ui/loader";
 import { Separator } from "@/components/ui/separator";
 import { useSession } from "@/context/session";
 import { useCreateSession } from "@/hooks/supabase/session";
+import HistoryDropdown from "@/components/Historydropdown";
 
 const Home = () => {
   const [documentUrl, setDocumentUrl] = useState("");
@@ -22,15 +23,6 @@ const Home = () => {
     search: string,
     chatting: string
   }>()
-  const mockup = [
-    {name: 'Firebase Documentation Home', link: 'https://firebase.google.com/docs'}, 
-    {name: 'Firebase Authentication', link: 'https://firebase.google.com/docs/auth'},
-    {name: 'Cloud Firestore', link: 'https://firebase.google.com/docs/firestore'},
-    {name: 'Firebase Realtime Database', link: 'https://firebase.google.com/docs/database'},
-    {name: 'Firebase Realtime Database', link: 'https://firebase.google.com/docs/database'},
-    {name: 'Firebase Realtime Database', link: 'https://firebase.google.com/docs/database'},
-    {name: 'Cloud Functions for Firebase', link: 'https://firebase.google.com/docs'}
-  ]
   const [suggestions, setSuggestions] = useState<{name: string, link: string}[]>()
   const [invalidMsg, setInvalidMsg] = useState<string>()
   const useSearchDoc = async() => {
@@ -44,7 +36,7 @@ const Home = () => {
       setSuggestions(undefined)
     }
     setLoading((prev) => ({...prev, search: true}))
-    AxiosClient.post(`/find-doc`, { query: docName }).then((response) => {
+    AxiosClient.post(`/find-doc`, { query: documentUrl }).then((response) => {
       if(response.data?.result?.name) {
         setDocumentUrl(response.data?.result?.link)
       } else if(response.data?.result?.suggestions) {
@@ -61,7 +53,6 @@ const Home = () => {
       console.log(error)
     }).finally(() => {
       setLoading(undefined)
-      // setDocName(undefined)
     })
   }
   const disabilityChecker = () => {
@@ -71,6 +62,14 @@ const Home = () => {
       return false
     } else if(!documentUrl?.trim() && docName?.trim()) {
       return false
+    }
+  }
+  const linkChecker = (value: string) => {
+    try {
+      new URL(value);
+      return true;
+    } catch {
+      return false;
     }
   }
   const { appUser} = useUser()
@@ -85,7 +84,7 @@ const Home = () => {
       sub: "just ask."
     }
   ]
-  const tabs = ["Search For Documentation"]
+  const tabs = ["Search For Documentation", "History"]
   const [heroText, setHerotext] = useState<number>(0)
   const { setSessionData, sessionData } = useSession()
   useEffect(() => {
@@ -97,12 +96,13 @@ const Home = () => {
   }, []);
   const createSession = useCreateSession()
   const handleSubmit = (e: React.FormEvent) => {
+    setLoading((prev) => ({...prev, chatting: true}))
     e.preventDefault();
     if(isError) {
       setError(undefined)
     }
-    setLoading((prev) => ({...prev, chatting: true}))
-    if (documentUrl.trim()) {
+    const isLink = linkChecker(documentUrl)
+    if(isLink) {
       if(appUser) {
         AxiosClient.post("/fetch-html", { url: documentUrl}).then((response) => {
          if(response.data?.length > 0) {
@@ -161,33 +161,37 @@ const Home = () => {
             <Tabs defaultValue={tabs[0]}>
               <TabsList className="gap-x-6 text-primary">
                 <TabsTrigger value={tabs[0]}>{tabs[0]}</TabsTrigger>
+                <TabsTrigger value="history"> <History className="w-6 h-6"/> </TabsTrigger>
               </TabsList>
                 <TabsContent value={tabs[0]} className="z-10">
-                <form onSubmit={handleSubmit} className="flex flex-col z-10 space-y-1 max-w-2xl mx-auto mb-12">
-                      <div className={`flex flex-col sm:flex-row gap-4 p-2 bg-background z-10 rounded-xl border shadow-lg ${isError?.search && "border-[1px] border-red-500"}`}>
-                        <div className="flex-1">
-                          <Input
-                            type="text"
-                            placeholder="Search documentation by name…..."
-                            value={documentUrl !== "" ? documentUrl : docName}
-                            onChange={(e) => documentUrl !== "" ? (setDocumentUrl(e.target.value), isError?.search && setError(undefined)) : (setDocName(e.target.value), isError?.search && setError(undefined))}
-                            className={`${isError ? "border-2 border-red-500" : ""} border-0 bg-transparent text-lg placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0`}
-                            required
-                          />
+                  <form onSubmit={handleSubmit} className="flex flex-col z-10 space-y-1 max-w-2xl mx-auto mb-12">
+                        <div className={`flex flex-col sm:flex-row gap-4 p-2 bg-background z-10 rounded-xl border shadow-lg ${isError?.search && "border-[1px] border-red-500"}`}>
+                          <div className="flex-1">
+                            <Input
+                              type="text"
+                              placeholder="Search documentation by name…..."
+                              value={documentUrl}
+                              onChange={(e) => (setDocumentUrl(e.target.value), isError?.search && setError(undefined))}
+                              className={`${isError ? "border-2 border-red-500" : ""} border-0 bg-transparent text-lg placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0`}
+                              required
+                            />
+                          </div>
+                          <Button
+                            type="submit"
+                            size="lg"
+                            className="bg-primary hover:bg-primary-hover text-primary-foreground px-8 shadow-md"
+                            disabled={disabilityChecker() || isLoading?.search || isLoading?.chatting}
+                          >
+                            {isLoading?.chatting ? <Loader /> : documentUrl ? "Start Chatting" : <>{isLoading?.search ? <Loader /> : "Search docs"}</>}
+                            <ArrowRight className="ml-2 h-5 w-5" />
+                          </Button>
                         </div>
-                        <Button
-                          type="submit"
-                          size="lg"
-                          className="bg-primary hover:bg-primary-hover text-primary-foreground px-8 shadow-md"
-                          disabled={disabilityChecker() || isLoading?.search || isLoading?.chatting}
-                        >
-                          {isLoading?.chatting ? <Loader /> : documentUrl ? "Start Chatting" : <>{isLoading?.search ? <Loader /> : "Search docs"}</>}
-                          <ArrowRight className="ml-2 h-5 w-5" />
-                        </Button>
-                      </div>
-                      {isError?.search && <span className="text-red-500 text-[12px] self-start text-left font-semibold">{isError?.search}</span>}
-                      {isError?.chatting && <span className="text-red-500 text-[12px] self-start text-left font-semibold">{isError?.chatting}</span>}
-                </form>
+                        {isError?.search && <span className="text-red-500 text-[12px] self-start text-left font-semibold">{isError?.search}</span>}
+                        {isError?.chatting && <span className="text-red-500 text-[12px] self-start text-left font-semibold">{isError?.chatting}</span>}
+                  </form>
+                </TabsContent>
+                <TabsContent value="history">
+                  <HistoryDropdown user_id={appUser?.id}/>
                 </TabsContent>
             </Tabs>
             {suggestions && suggestions.length > 0 && (
