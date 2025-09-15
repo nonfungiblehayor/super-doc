@@ -1,0 +1,21 @@
+{
+    "manifest_version": 3,
+    "name": "Superdoc",
+    "version": "1.0",
+    "description": "Ask questions directly from documentation pages.",
+    "permissions": ["tabs", "scripting", "activeTab", "identity", "microphone"],
+    "background": {
+      "service_worker": "background.js"
+    },
+    "content_scripts": [
+      {
+        "matches": ["<all_urls>"],
+        "js": ["content.js"]
+      }
+    ],
+    "action": {
+      "default_popup": "index.html",
+      "default_icon": "super-doc.png"
+    }
+  }
+  

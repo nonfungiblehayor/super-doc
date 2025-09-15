@@ -50,7 +50,6 @@ const Home = () => {
       } else {
         setError((prev) => ({...prev, search: error?.message}))
       }
-      console.log(error)
     }).finally(() => {
       setLoading(undefined)
     })
@@ -73,6 +72,7 @@ const Home = () => {
     }
   }
   const { appUser} = useUser()
+  console.log(appUser)
   const navigate = useNavigate();
   const heroTexts = [
     {
@@ -128,15 +128,22 @@ const Home = () => {
       useSearchDoc()
     }
   };
+  useEffect(() => {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0]?.url) {
+        setDocumentUrl(tabs[0].url);
+      }
+    });
+  }, []);
 
   return (
-    <div className="h-full bg-background">
+    <div className="h-full bg-background w-full">
       {/* Hero Section */}
-      <main className="relative">
+      <main className="relative w-full">
         <div className="absolute inset-0 bg-gradient-to-br from-primary-light to-background opacity-50"></div>
         
-        <div className="relative container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
-          <div className="text-center max-w-4xl mx-auto">
+        <div className="relative w-full lg:px-8 pt-20 pb-16">
+          <div className="text-center w-full px-2">
             {/* Badge */}
             <div className="inline-flex items-center rounded-full border px-3 py-1 text-sm font-medium mb-8 bg-primary-light border-primary/20">
               <Sparkles className="h-4 w-4 mr-2 text-primary" />
@@ -144,7 +151,7 @@ const Home = () => {
             </div>
 
             {/* Main Heading */}
-            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-foreground mb-6">
+            <h1 className="text-2xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-foreground mb-6">
               {heroTexts[heroText].main}{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-hover">
               {heroTexts[heroText].sub}
@@ -154,12 +161,12 @@ const Home = () => {
             </h1>
 
             {/* Subheading */}
-            <p className="text-xl sm:text-2xl text-muted-foreground max-w-3xl mx-auto mb-8 leading-relaxed">
+            <p className="text-sm sm:text-2xl text-muted-foreground max-w-3xl mx-auto mb-8 leading-relaxed">
               Skip the keyword hunt — just ask your docs directly and get instant answers.
             </p>
 
-            <Tabs defaultValue={tabs[0]}>
-              <TabsList className="gap-x-6 text-primary">
+            <Tabs defaultValue={tabs[0]} className="px-2">
+              <TabsList className="gap-x-2 text-primary">
                 <TabsTrigger value={tabs[0]}>{tabs[0]}</TabsTrigger>
                 <TabsTrigger disabled={!appUser} value="history"> <History className="w-6 h-6"/> </TabsTrigger>
               </TabsList>
@@ -172,7 +179,7 @@ const Home = () => {
                               placeholder="Search documentation by name…..."
                               value={documentUrl}
                               onChange={(e) => (setDocumentUrl(e.target.value), isError?.search && setError(undefined))}
-                              className={`${isError ? "border-2 border-red-500" : ""} border-0 bg-transparent text-lg placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0`}
+                              className={`${isError ? "border-2 border-red-500" : ""} border-0 bg-transparent text-sm placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0`}
                               required
                             />
                           </div>

@@ -16,7 +16,9 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const allowedOrigins = [
     "http://localhost:8080",
-    "https://superdoc-agent.mastra.cloud/",
+    "http://localhost:8081",
+    "https://superdoc-agent.mastra.cloud/",,
+    "chrome-extension://ippmhdllaoencfelhogbbkmnnhhenchj",
 ]
 app.use(
   cors({

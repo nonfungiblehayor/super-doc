@@ -12,6 +12,7 @@ import { UserContextProvider } from "./context/user";
 import { SessionContextProvider } from "./context/session";
 import ToastProvider from "./context/toast";
 import { HashRouter } from "react-router-dom";
+import Otp from "./pages/Otp";
 
 
 const queryClient = new QueryClient();
@@ -24,14 +25,15 @@ const App = () => (
       <Sonner />
       <UserContextProvider>
       <SessionContextProvider>
-      <BrowserRouter>
+      <HashRouter>
         <Routes>
           <Route path="/" element={ <Layout><Home /> </Layout>} />
           <Route path="/chat/:id" element={<Layout> <Chat /> </Layout>} />
           <Route path="/signup" element={<Layout> <Signup /> </Layout>} />
+          <Route path="/confirm-otp" element={<Layout> <Otp /> </Layout>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
-      </BrowserRouter>
+      </HashRouter>
       </SessionContextProvider>
       </UserContextProvider>
     </TooltipProvider>
