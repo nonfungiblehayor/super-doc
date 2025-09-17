@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",      // Use the standard module system for extensions
+    "target": "es2020",
+    "outDir": "dist",          // <-- THE CRITICAL FIX: Put output in a "dist" folder.
+    "strict": true,
+    "rootDir": "src",          // Tell the compiler your source code is in "src"
+    "sourceMap": true
+  },
+  "include": ["src"]           // Only compile files found in the "src" folder
+}

@@ -1,0 +1,216 @@
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useNavigate } from "react-router-dom";
+import { AlertCircleIcon, ArrowRight, History, Sparkles } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useUser } from "@/context/user";
+import { AxiosClient } from "@/utils/axios-client";
+import { Loader } from "@/components/ui/loader";
+import { Separator } from "@/components/ui/separator";
+import { useSession } from "@/context/session";
+import { useCreateSession } from "@/hooks/supabase/session";
+import HistoryDropdown from "@/components/Historydropdown";
+
+const Home = () => {
+  const [documentUrl, setDocumentUrl] = useState("");
+  const [docName, setDocName] = useState<string>()
+  const [isLoading, setLoading] = useState<{
+    search: boolean,
+    chatting: boolean
+  }>()
+  const [isError, setError] = useState<{
+    search: string,
+    chatting: string
+  }>()
+  const [suggestions, setSuggestions] = useState<{name: string, link: string}[]>()
+  const [invalidMsg, setInvalidMsg] = useState<string>()
+  const useSearchDoc = async() => {
+    if(isError?.search) {
+      setError(undefined)
+    }
+    if(invalidMsg) {
+      setInvalidMsg(undefined)
+    }
+    if(suggestions) {
+      setSuggestions(undefined)
+    }
+    setLoading((prev) => ({...prev, search: true}))
+    AxiosClient.post(`/find-doc`, { query: documentUrl }).then((response) => {
+      if(response.data?.result?.name) {
+        setDocumentUrl(response.data?.result?.link)
+      } else if(response.data?.result?.suggestions) {
+        setSuggestions(response.data?.result?.suggestions)
+      } else if(response.data?.result?.message) {
+        setInvalidMsg(response.data?.result?.message)
+      }
+    }).catch((error) => {
+      if(error.status === 500) {
+        setError((prev) => ({...prev, search: "An error occured try again"}))
+      } else {
+        setError((prev) => ({...prev, search: error?.message}))
+      }
+      console.log(error)
+    }).finally(() => {
+      setLoading(undefined)
+    })
+  }
+  const disabilityChecker = () => {
+    if(!documentUrl?.trim() && !docName?.trim()) {
+      return true
+    } else if(documentUrl?.trim() && !docName?.trim()) {
+      return false
+    } else if(!documentUrl?.trim() && docName?.trim()) {
+      return false
+    }
+  }
+  const linkChecker = (value: string) => {
+    try {
+      new URL(value);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  const { appUser} = useUser()
+  const navigate = useNavigate();
+  const heroTexts = [
+    {
+      main: "Because no one actually reads the",
+      sub: "docs."
+    }, 
+    {
+      main: "Skip the scroll, skip the search —",
+      sub: "just ask."
+    }
+  ]
+  const tabs = ["Search For Documentation", "History"]
+  const [heroText, setHerotext] = useState<number>(0)
+  const { setSessionData, sessionData } = useSession()
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setHerotext((prev) => (prev + 1) % heroTexts.length )
+    }, 7000);
+
+    return () => clearInterval(interval);
+  }, []);
+  const createSession = useCreateSession()
+  const handleSubmit = (e: React.FormEvent) => {
+    setLoading((prev) => ({...prev, chatting: true}))
+    e.preventDefault();
+    if(isError) {
+      setError(undefined)
+    }
+    const isLink = linkChecker(documentUrl)
+    if(isLink) {
+      if(appUser) {
+        AxiosClient.post("/fetch-html", { url: documentUrl}).then((response) => {
+         if(response.data?.length > 0) {
+          createSession.mutateAsync({user_id: appUser?.id, docs_link: documentUrl, data: response.data}).then((res) => {
+            navigate(`/chat/${res.id}`);
+          }).catch((error) => {
+            setError((prev) => ({...prev, chatting: error}))
+          })
+         } 
+        }).catch((error) => {
+          if(error.status === 500) {
+            setError((prev) => ({...prev, search: "An error occured try again"}))
+          } else {
+            setError((prev) => ({...prev, search: error?.message}))
+          }
+        }).finally(() => {
+          setLoading(undefined)
+        })
+      } else {
+        navigate("/signup")
+      }
+    } else {
+      useSearchDoc()
+    }
+  };
+
+  return (
+    <div className="h-full bg-background">
+      {/* Hero Section */}
+      <main className="relative">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary-light to-background opacity-50"></div>
+        
+        <div className="relative container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
+          <div className="text-center max-w-4xl mx-auto">
+            {/* Badge */}
+            <div className="inline-flex items-center rounded-full border px-3 py-1 text-sm font-medium mb-8 bg-primary-light border-primary/20">
+              <Sparkles className="h-4 w-4 mr-2 text-primary" />
+                Documentation Copilot
+            </div>
+
+            {/* Main Heading */}
+            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-foreground mb-6">
+              {heroTexts[heroText].main}{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-hover">
+              {heroTexts[heroText].sub}
+              </span>
+
+              {/* Skip the scroll, skip the search — just ask. */}
+            </h1>
+
+            {/* Subheading */}
+            <p className="text-xl sm:text-2xl text-muted-foreground max-w-3xl mx-auto mb-8 leading-relaxed">
+              Skip the keyword hunt — just ask your docs directly and get instant answers.
+            </p>
+
+            <Tabs defaultValue={tabs[0]}>
+              <TabsList className="gap-x-6 text-primary">
+                <TabsTrigger value={tabs[0]}>{tabs[0]}</TabsTrigger>
+                <TabsTrigger disabled={!appUser} value="history"> <History className="w-6 h-6"/> </TabsTrigger>
+              </TabsList>
+                <TabsContent value={tabs[0]} className="z-10">
+                  <form onSubmit={handleSubmit} className="flex mt-4 flex-col z-10 space-y-1 max-w-2xl mx-auto mb-12">
+                        <div className={`flex flex-col sm:flex-row gap-4 p-2 bg-background z-10 rounded-xl border shadow-lg ${isError?.search && "border-[1px] border-red-500"}`}>
+                          <div className="flex-1">
+                            <Input
+                              type="text"
+                              placeholder="Search documentation by name…..."
+                              value={documentUrl}
+                              onChange={(e) => (setDocumentUrl(e.target.value), isError?.search && setError(undefined))}
+                              className={`${isError ? "border-2 border-red-500" : ""} border-0 bg-transparent text-lg placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0`}
+                              required
+                            />
+                          </div>
+                          <Button
+                            type="submit"
+                            size="lg"
+                            className="bg-primary hover:bg-primary-hover text-primary-foreground px-8 shadow-md"
+                            disabled={disabilityChecker() || isLoading?.search || isLoading?.chatting}
+                          >
+                            {isLoading?.chatting ? <Loader /> : documentUrl ? "Start Chatting" : <>{isLoading?.search ? <Loader /> : "Search docs"}</>}
+                            <ArrowRight className="ml-2 h-5 w-5" />
+                          </Button>
+                        </div>
+                        {isError?.search && <span className="text-red-500 text-[12px] self-start text-left font-semibold">{isError?.search}</span>}
+                        {isError?.chatting && <span className="text-red-500 text-[12px] self-start text-left font-semibold">{isError?.chatting}</span>}
+                  </form>
+                </TabsContent>
+                <TabsContent value="history">
+                  <HistoryDropdown user_id={appUser?.id}/>
+                </TabsContent>
+            </Tabs>
+            {suggestions && suggestions.length > 0 && (
+              <div className="shadow-2xl bg-white rounded-xl -mt-14 h-[180px] z-0 overflow-y-scroll p-4 w-4/12 ml-28">
+                <p className="text-[10px] text-primary text-left">Which of the follwiing documentations are you trying to access:</p>
+                {suggestions.map((suggestion, index) => (
+                  <div onClick={() => (setDocumentUrl(suggestion.link), setSuggestions([]))} key={index} className="flex cursor-pointer flex-col text-left p-2 font-semibold text-[13px]">
+                    <span>{suggestion.name}</span>
+                    <Separator />
+                  </div>
+                ))}
+              </div>
+            )}
+            {invalidMsg && <div className="-mt-10 text-red-500 flex items-center justify-center gap-x-2"> <AlertCircleIcon className="h-4 w-4"/> {invalidMsg}</div>}
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default Home;

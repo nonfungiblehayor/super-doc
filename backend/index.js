@@ -11,19 +11,19 @@ import JSON5 from "json5";
 
 
 dotenv.config();
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 const allowedOrigins = [
     "http://localhost:8080",
     "http://localhost:8081",
-    "https://superdoc-agent.mastra.cloud/",,
+    "https://superdoc-agent.mastra.cloud/",
     "chrome-extension://ippmhdllaoencfelhogbbkmnnhhenchj",
+    'vscode-webview://'       
 ]
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin || allowedOrigins.some(o => origin.startsWith(o))) {
         callback(null, true);
       } else {
         callback(new Error("Not allowed by CORS"));

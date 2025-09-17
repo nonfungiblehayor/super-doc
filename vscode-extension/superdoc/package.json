@@ -1,0 +1,46 @@
+{
+  "name": "Superdoc",
+  "displayName": "Superdoc",
+  "description": "Documentation co-pilot",
+  "version": "0.0.1",
+  "engines": { "vscode": "^1.85.0" },
+  "activationEvents": [
+    "onCommand:superdoc.showPanel"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "superdoc.showPanel",
+        "title": "Superdoc"
+      }
+    ],
+  "viewsContainers": {
+    "activitybar": [
+      {
+        "id": "superdoc-primary-sidebar",
+        "title": "Superdoc",
+        "icon": "resources/icon.svg"
+      }
+    ]
+  },
+  "views": {
+    "superdoc-primary-sidebar": [
+      {
+        "id": "superdoc.commandsView",
+        "name": "Actions"
+      }
+    ]
+  }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "18.x",
+    "typescript": "^5.3.3"
+  }
+}
