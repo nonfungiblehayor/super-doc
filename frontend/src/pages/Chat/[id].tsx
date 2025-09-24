@@ -142,7 +142,8 @@ const Chat = () => {
             }
             if (event === "answer") {
               fullAnswer += parsed.text;
-            } 
+            }
+            console.log(fullAnswer) 
             if (event === "done") {
              createConversation.mutateAsync({
                 session_id: session?.id,
@@ -371,7 +372,22 @@ const Chat = () => {
                       <User className="h-4 w-4 text-primary-foreground"/>
                     </div>
                       <div
-                      className={`w-full rounded-lg p-4 bg-muted cursor-pointer transition-all shadow-md
+                      className={`w-full hidden sm:flex flex-col rounded-lg p-4 bg-muted cursor-pointer transition-all shadow-md
+                      ${selectedResponse?.id === message?.id ? "ring-2 ring-primary" : ""}`}
+                      onClick={() => message.response ? (setSelectedResponse(message)) : toast.error("An error occured, no response to preview")}
+                      >
+                        <p className="whitespace-pre-wrap">{message?.question}</p>
+                        <div className="flex items-center text-black justify-end gap-1 mt-4">
+                            <Button onClick={() => retryAi(message)} disabled={isLoader?.retry?.loading || isLoading} className="bg-transparent hover:bg-transparent w-4 h-4">
+                              {isLoader?.retry?.loading && isLoader?.retry?.id === message?.id ? <Loader2 className="animate-spin text-primary w-4 h-4" /> :  <RefreshCcw className="text-black"/>}
+                            </Button>
+                            <Button onClick={() => handleDelete(message?.id)} disabled={isLoader?.delete?.loading || isLoading} className="bg-transparent hover:bg-transparent w-4 h-4">
+                              {isLoader?.delete?.loading && isLoader?.delete?.id === message?.id ? <Loader2 className="animate-spin text-primary w-4 h-4" /> : <Trash className="text-red-500"/>}
+                            </Button>
+                        </div>
+                      </div>
+                      <div
+                      className={`w-full flex sm:hidden rounded-lg p-4 bg-muted cursor-pointer transition-all shadow-md
                       ${selectedResponse?.id === message?.id ? "ring-2 ring-primary" : ""}`}
                       onClick={() => message.response ? (setSelectedResponse(message), setMobile(true)) : toast.error("An error occured, no response to preview")}
                       >
@@ -522,9 +538,9 @@ const Chat = () => {
         </div>
       </div>
       {selectedResponse && (
-        <div className="flex sm:hidden">
+      <div className="flex sm:hidden">
         <Dialog open={isMobile} onOpenChange={setMobile}>
-          <DialogContent className="h-5/6">
+          <DialogContent  className="flex sm:hidden h-5/6">
             {selectedResponse?.response ? 
             <div className="prose h-[90%] flex flex-col overflow-y-scroll justify-between prose-sm max-w-none dark:prose-invert">
                 <MarkdownRenderer content={selectedResponse?.response} />

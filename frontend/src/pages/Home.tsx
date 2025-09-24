@@ -182,7 +182,7 @@ const Home = () => {
                             className="bg-primary hover:bg-primary-hover text-primary-foreground px-8 shadow-md"
                             disabled={disabilityChecker() || isLoading?.search || isLoading?.chatting}
                           >
-                            {isLoading?.chatting ? <Loader /> : documentUrl ? "Start Chatting" : <>{isLoading?.search ? <Loader /> : "Search docs"}</>}
+                            {isLoading?.chatting ? <Loader /> : documentUrl ? `${isError?.chatting ? "Try again" : "Start Chatting"}` : <>{isLoading?.search ? <Loader /> : `${isError?.search ? "Try again" : "Search docs"}`}</>}
                             <ArrowRight className="ml-2 h-5 w-5" />
                           </Button>
                         </div>
@@ -195,10 +195,11 @@ const Home = () => {
                 </TabsContent>
             </Tabs>
             {suggestions && suggestions.length > 0 && (
-              <div className="shadow-2xl bg-white rounded-xl -mt-14 h-[180px] z-0 overflow-y-scroll p-4 w-4/12 ml-28">
+              <div className="shadow-2xl bg-white rounded-xl -mt-14 h-[180px] z-0 overflow-y-scroll p-4 w-8/12 ml-28">
                 <p className="text-[10px] text-primary text-left">Which of the follwiing documentations are you trying to access:</p>
                 {suggestions.map((suggestion, index) => (
-                  <div onClick={() => (setDocumentUrl(suggestion.link), setSuggestions([]))} key={index} className="flex cursor-pointer flex-col text-left p-2 font-semibold text-[13px]">
+                  //setSuggestions([])
+                  <div onClick={() => (setDocumentUrl(suggestion.link))} key={index} className="flex cursor-pointer flex-col text-left p-2 font-semibold text-[13px]">
                     <span>{suggestion.name}</span>
                     <Separator />
                   </div>

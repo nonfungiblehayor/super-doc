@@ -2,8 +2,9 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { useUser } from "@/context/user"
-import { useOtp } from "@/hooks/supabase/auth"
+import { useMail, useOtp } from "@/hooks/supabase/auth"
 import { useState } from "react"
+import toast from "react-hot-toast"
 import { useNavigate } from "react-router-dom"
 
 const Otp = () => {
@@ -22,6 +23,19 @@ const Otp = () => {
             setFormState((prev) => ({...prev, loading: false}))
         })
     }
+        const handleSignup = () => {
+        setFormState((prev) => ({...prev, loading: true}))
+        if(formState?.error) {
+          setFormState((prev) => ({ ...prev, error: "" }));
+        }
+        useMail(otpMail).then((res) => {
+         toast.success("OTP sent succesfully")
+        }).catch((error) => {
+          setFormState((prev) => ({ ...prev, error: error?.message }))
+        }).finally(() => {
+          setFormState((prev) => ({...prev, loading: false}))
+        })
+    };
     return (
         <div className="min-h-screen w-[320px] bg-background">
         <div className="container max-w-md mx-auto px-4 py-16">
@@ -49,6 +63,12 @@ const Otp = () => {
                   />
                   {formState?.error && <span className="text-red-500 text-[13px] text-left">{formState?.error}</span>}
                 </div>
+                <Button 
+                onClick={handleSignup}
+                disabled={!otpMail || formState?.loading}
+                className="bg-transparent hover:bg-transparent text-[10px] text-primary">
+                  Resend otp
+                </Button>
                 <Button
                   disabled={!formState?.otp?.trim() || formState?.loading || formState?.otp?.length !== 6}
                   variant="outline"

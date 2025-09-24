@@ -18,7 +18,7 @@ const allowedOrigins = [
     "http://localhost:8081",
     "https://superdoc-agent.mastra.cloud/",
     "chrome-extension://ippmhdllaoencfelhogbbkmnnhhenchj",
-    'vscode-webview://'       
+    "vscode-webview://" 
 ]
 app.use(
   cors({
@@ -32,6 +32,7 @@ app.use(
     credentials: true,
   })
 )
+
 app.use(express.json());
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
@@ -303,7 +304,7 @@ app.post("/get-answer-from-docs", async (req, res) => {
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
-    res.setHeader("Access-Control-Allow-Origin", "http://localhost:8080");
+    //res.setHeader("Access-Control-Allow-Origin", "http://localhost:8080");
     res.flushHeaders();
 
     const send = (event, data) => {
@@ -357,6 +358,67 @@ app.post("/get-answer-from-docs", async (req, res) => {
 
     send("done", { message: "Completed." });
     res.end();
+
+  } catch (error) {
+    console.error("Error in combined endpoint:", error);
+    if (!res.headersSent) {
+      res.write(`event: error\ndata: ${JSON.stringify({ message: error.message })}\n\n`);
+      res.end();
+    } else {
+      throw error
+    }
+  }
+});
+
+app.post("/get-answer-from-docs-agent", async (req, res) => {
+  try {
+    const { documentation_url, user_question, links_array } = req.body;
+    if (!user_question || !documentation_url) {
+      res.write(`event: error\ndata: ${JSON.stringify({ message: "User question and documentation url are required" })}\n\n`);
+      return res.end();
+    }
+
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive")
+    res.flushHeaders();
+
+    const findUrlContents = [{
+      role: "user",
+      parts: [{ 
+        text: `link_arrays: ${JSON.stringify(links_array, null, 2)}\n\nuser_question: "${user_question}"\n\ndocumentation_url: "${documentation_url}"` 
+      }],
+    }];
+
+    const findUrlResponse = await ai.models.generateContent({
+      model,
+      config: { systemInstruction: [{ text: `${findUrl}` }] },
+      contents: findUrlContents,
+    });
+
+    const specific_page_url = findUrlResponse?.candidates[0].content.parts[0].text.trim();
+
+    if (!specific_page_url) {
+      return res.end();
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 31000)); // rate limit
+    const answerContents = [{
+      role: "user",
+      parts: [{ text: `Using the content from the URL ${specific_page_url}, please answer the following question: "${user_question}"` }],
+    }];
+
+    const responseStream = await ai.models.generateContentStream({
+      model,
+      config: { tools: [{ urlContext: {} }], systemInstruction: [{ text: findAnswer }] },
+      contents: answerContents,
+    });
+
+    for await (const chunk of responseStream) {
+      const text = chunk?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (text) res.json({ text })
+      //res.write(`data: ${JSON.stringify(text)}\n\n`);
+    }
 
   } catch (error) {
     console.error("Error in combined endpoint:", error);
