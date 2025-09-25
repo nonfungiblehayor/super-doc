@@ -13,8 +13,7 @@ export const answer_from_doc = createTool({
         // links_array: z.string().describe("Array of links")
     }),    
     execute: async({ context }) => {
-    const data =  await getAnswer(context.documentation_url, context.user_question, links);
-        console.log(data)
+    const data =  await getAnswer(context.documentation_url, context.user_question, links)
         return {
             result: data
         }

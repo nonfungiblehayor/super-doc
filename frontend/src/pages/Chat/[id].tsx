@@ -124,7 +124,7 @@ const Chat = () => {
       const reader = response.body.getReader()
       const decoder = new TextDecoder("utf-8")
       let done = false;
-      let fullAnswer;
+      let fullAnswer = "";
       while (!done) {
         const { value, done: readerDone } = await reader.read();
         done = readerDone;
@@ -205,7 +205,7 @@ const Chat = () => {
       const reader = response.body.getReader()
       const decoder = new TextDecoder("utf-8")
       let done = false;
-      let fullAnswer;
+      let fullAnswer = "";
       while (!done) {
         const { value, done: readerDone } = await reader.read();
         done = readerDone;
@@ -502,7 +502,7 @@ const Chat = () => {
             <p className="text-sm text-muted-foreground">Click on any AI response to preview it here</p>
           </div>
           {selectedResponse ? (
-                <div className="prose h-5/6 flex flex-col overflow-y-scroll p-6 justify-between prose-sm max-w-none dark:prose-invert">
+                <div className="h-5/6 flex flex-col overflow-y-scroll p-6 justify-between max-w-none">
                   <MarkdownRenderer content={selectedResponse?.response} />
                   <div className="flex fixed bottom-8 w-[55%] items-center px-4 justify-between">
                     <div className="flex items-center gap-2">
@@ -542,7 +542,7 @@ const Chat = () => {
         <Dialog open={isMobile} onOpenChange={setMobile}>
           <DialogContent  className="flex sm:hidden h-5/6">
             {selectedResponse?.response ? 
-            <div className="prose h-[90%] flex flex-col overflow-y-scroll justify-between prose-sm max-w-none dark:prose-invert">
+            <div className="h-[90%] flex flex-col overflow-y-scroll justify-between max-w-none">
                 <MarkdownRenderer content={selectedResponse?.response} />
                 <div className="flex fixed bottom-8 w-[55%] items-center px-4 justify-between">
                   <div className="flex items-center gap-2">

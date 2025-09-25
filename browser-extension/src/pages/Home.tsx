@@ -72,7 +72,6 @@ const Home = () => {
     }
   }
   const { appUser} = useUser()
-  console.log(appUser)
   const navigate = useNavigate();
   const heroTexts = [
     {

@@ -373,15 +373,10 @@ app.post("/get-answer-from-docs", async (req, res) => {
 app.post("/get-answer-from-docs-agent", async (req, res) => {
   try {
     const { documentation_url, user_question, links_array } = req.body;
-    if (!user_question || !documentation_url) {
-      res.write(`event: error\ndata: ${JSON.stringify({ message: "User question and documentation url are required" })}\n\n`);
-      return res.end();
-    }
 
-    res.setHeader("Content-Type", "text/event-stream");
-    res.setHeader("Cache-Control", "no-cache");
-    res.setHeader("Connection", "keep-alive")
-    res.flushHeaders();
+    if (!user_question || !documentation_url) {
+      return res.status(400).json({ message: "User question and documentation url are required" });
+    }
 
     const findUrlContents = [{
       role: "user",
@@ -396,13 +391,14 @@ app.post("/get-answer-from-docs-agent", async (req, res) => {
       contents: findUrlContents,
     });
 
-    const specific_page_url = findUrlResponse?.candidates[0].content.parts[0].text.trim();
-
+    const specific_page_url = findUrlResponse?.candidates[0]?.content.parts[0]?.text.trim();
     if (!specific_page_url) {
-      return res.end();
+      return res.status(404).json({ message: "Could not determine specific page URL" });
     }
 
-    await new Promise(resolve => setTimeout(resolve, 31000)); // rate limit
+    // Optional rate limit
+    await new Promise(resolve => setTimeout(resolve, 31000));
+
     const answerContents = [{
       role: "user",
       parts: [{ text: `Using the content from the URL ${specific_page_url}, please answer the following question: "${user_question}"` }],
@@ -414,22 +410,20 @@ app.post("/get-answer-from-docs-agent", async (req, res) => {
       contents: answerContents,
     });
 
+    let fullText = "";
     for await (const chunk of responseStream) {
       const text = chunk?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (text) res.json({ text })
-      //res.write(`data: ${JSON.stringify(text)}\n\n`);
+      if (text) fullText += text;
     }
+
+    return res.json({ text: fullText });
 
   } catch (error) {
     console.error("Error in combined endpoint:", error);
-    if (!res.headersSent) {
-      res.write(`event: error\ndata: ${JSON.stringify({ message: error.message })}\n\n`);
-      res.end();
-    } else {
-      throw error
-    }
+    return res.status(500).json({ message: error.message });
   }
 });
+
 
 app.post('/transcribe', upload.single('audio'), async (req, res) => {
   try {
