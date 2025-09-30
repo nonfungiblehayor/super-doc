@@ -143,7 +143,6 @@ const Chat = () => {
             if (event === "answer") {
               fullAnswer += parsed.text;
             }
-            console.log(fullAnswer) 
             if (event === "done") {
              createConversation.mutateAsync({
                 session_id: session?.id,

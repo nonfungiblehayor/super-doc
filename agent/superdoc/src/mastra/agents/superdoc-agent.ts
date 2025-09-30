@@ -19,10 +19,6 @@ export const superdocAgent = new Agent({
         Execute the Process:
         Your one and only action is to call the get_answer_from_docs tool.
         You must pass all three inputs (documentation_url, user_question, and links_array) to this tool.
-        Confirm and Stand By:
-        The get_answer_from_docs tool will handle everything else. It will find the relevant page, extract the information, and stream the answer directly to the user interface.
-        You do not need to wait for a final answer to be returned to you. Your job is complete once you have successfully called the tool.
-        After calling the tool, you can simply confirm to the user that the process has begun. For example: "I have started searching the documentation to find the answer. The results will be streamed below."
 .
     `,
     model: google('gemini-2.5-pro'),
@@ -33,3 +29,7 @@ export const superdocAgent = new Agent({
         }),
     }),
 })
+//  Confirm and Stand By:
+//         The get_answer_from_docs tool will handle everything else. It will find the relevant page, extract the information, and stream the answer directly to the user interface.
+//         You do not need to wait for a final answer to be returned to you. Your job is complete once you have successfully called the tool.
+//         After calling the tool, you can simply confirm to the user that the process has begun. For example: "I have started searching the documentation to find the answer. The results will be streamed below."

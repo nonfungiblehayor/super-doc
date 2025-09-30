@@ -1,71 +1,90 @@
-# test-vscode README
+# Superdoc 🚀
 
-This is the README for your extension "test-vscode". After writing up a brief description, we recommend including the following sections.
+**Superdoc is an AI documentation co-pilot that reads any technical documentation for you, allowing you to get instant answers and code snippets just by asking questions.**
 
-## Features
+Stop switching between your editor and browser. With Superdoc, the docs come to you. Ask a question in plain English and get precise, code-rich answers without ever leaving VS Code.
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
-
-For example if there is an image subfolder under your extension project workspace:
-
-\!\[feature X\]\(images/feature-x.png\)
-
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
-
-## Requirements
-
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
-
-## Extension Settings
-
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
-This extension contributes the following settings:
-
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
-
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
+![Superdoc Demo](https://raw.githubusercontent.com/nonfungiblehayor/super-doc/tree/main/vscode-extension/superdoc/images/superdoc-demo.gif)
 
 ---
 
-## Following extension guidelines
+<!-- 
+**BADGES:** Replace '[publisher-name]' and '[repo-url]' with your actual info to make these badges work.
+-->
+[![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/your-publisher-name.superdoc?style=for-the-badge&label=VS%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=your-publisher-name.superdoc)
+[![Visual Studio Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/your-publisher-name.superdoc?style=for-the-badge)](https://marketplace.visualstudio.com/items?itemName=your-publisher-name.superdoc)
+[![GitHub Repo Stars](https://img.shields.io/github/stars/your-username/your-repo-name?style=for-the-badge)](https://github.com/your-username/your-repo-name)
 
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
+---
 
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
+## ✨ Features
 
-## Working with Markdown
+*   🔍 **Query Any Documentation Directly:** Provide a URL to any documentation, and Superdoc will read and understand it. Ask complex questions like "How do I set up Google auth?" and get precise answers and code snippets in seconds.
 
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
+*   🌐 **Discover Docs with AI:** Don't have a link? Just type a name like "Firebase documentation." Superdoc's AI will find the official link for you and suggest specific sub-pages to target exactly what you need.
 
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
+*   🧩 **Seamless Workflow Integration:** Superdoc is available everywhere you work. Use the VS Code Extension to get answers without ever leaving your editor, or the Browser Extension to query docs directly on the page.
 
-## For more information
+*   🗺️ **Intelligent Site Mapping and Routing:** Superdoc scrapes the entire documentation site to create a "map" of its contents. Its two-step AI first routes your question to the most relevant page before extracting the final answer, ensuring incredible accuracy.
 
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
+*   🎙️ **Go Hands-Free with Voice Mode:** Ask your questions out loud. Superdoc's Voice Mode allows you to interact with documentation completely hands-free, making it faster and more natural to get information while you code.
 
-**Enjoy!**
+## 📦 Installation
+
+1.  Open **Visual Studio Code**.
+2.  Press `Ctrl+Shift+X` or `Cmd+Shift+X` to open the Extensions view.
+3.  Search for `Superdoc`.
+4.  Click **Install**.
+5.  Click the Superdoc icon in the Activity Bar to get started!
+
+## ⚙️ How to Use
+
+### Getting Started
+
+1.  **Open the Superdoc Sidebar:** After installing, you will see a new **Superdoc logo icon** in the Activity Bar on the left side of your VS Code window. Click this icon to open the sidebar.
+
+2.  **Launch the Main Panel:** Inside the sidebar, under the "Actions" section, click the **`Open Superdoc Panel`** button. This will launch the main Superdoc interface in a new editor tab.
+
+### Using the Command Palette
+
+You can also launch Superdoc at any time using the Command Palette:
+
+1.  Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on Mac).
+2.  Type `Show Superdoc Panel` and press `Enter`.
+
+### Typical Workflow
+
+Once the Superdoc panel is open, you can:
+1.  Paste a link to any documentation website.
+2.  Ask a question in natural language (e.g., "How do I create a custom hook in React?").
+3.  Use the microphone icon to ask your question via voice.
+
+Superdoc processes the request, finds the most relevant information from the documentation, and displays a comprehensive answer directly within your VS Code panel.
+
+## ⌨️ Commands
+
+| Command               | Description                               |
+| --------------------- | ----------------------------------------- |
+| `Show Superdoc Panel` | Opens the main Superdoc interface in a new tab. |
+
+## 🔧 Extension Settings
+
+This extension does not currently have any configurable settings. All interactions are handled through the Superdoc panel.
+
+## 🐛 Bug Reports & Feature Requests
+
+Encounter a bug or have a great idea for a new feature? We'd love to hear from you!
+
+Please [create an issue on our GitHub repository](https://github.com/your-username/your-repo-name/issues).
+
+## 📝 Release Notes
+
+See the [CHANGELOG.md](CHANGELOG.md) file for details on each release.
+
+## 🤝 Contributing
+
+Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/your-username/your-repo-name/issues).
+
+## 📜 License
+
+This project is licensed under the [MIT License](LICENSE).

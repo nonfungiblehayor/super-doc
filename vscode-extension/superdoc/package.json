@@ -3,6 +3,12 @@
   "displayName": "Superdoc",
   "description": "Documentation co-pilot",
   "version": "0.0.1",
+  "publisher": "eibrahim_ayo",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nonfungiblehayor/super-doc/tree/main/vscode-extension/superdoc"
+  },
+  "icon": "resources/logo.png",
   "engines": { "vscode": "^1.85.0" },
   "activationEvents": [
     "onCommand:superdoc.showPanel"
