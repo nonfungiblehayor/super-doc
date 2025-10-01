@@ -5,7 +5,8 @@
 Stop switching between your editor and browser. With Superdoc, the docs come to you. Ask a question in plain English and get precise, code-rich answers without ever leaving VS Code.
 
 ![Superdoc Demo](https://github.com/nonfungiblehayor/super-doc/blob/dad72c5bb025e02b699aae9b94b054c5e5a8c72e/vscode-extension/superdoc/images/superdoc-demo.gif)
-
+(https://github.com/nonfungiblehayor/super-doc/blob/b56a86816e57812f0fb93f03e1c7f7edea6136c3/vscode-extension/superdoc/images/Url%20suggestion%20demo.gif)
+(https://github.com/nonfungiblehayor/super-doc/blob/b56a86816e57812f0fb93f03e1c7f7edea6136c3/vscode-extension/superdoc/images/Voice%20mode%20demo.gif)
 ---
 
 <!-- 
