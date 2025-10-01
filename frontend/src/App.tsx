@@ -12,12 +12,18 @@ import { UserContextProvider } from "./context/user";
 import { SessionContextProvider } from "./context/session";
 import ToastProvider from "./context/toast";
 import { HashRouter } from "react-router-dom";
+import { initMixpanel } from "./mixpanel";
+import { useEffect } from "react";
 
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
+const App = () => {
+  useEffect(() => {
+    initMixpanel()
+  }, [])
+  return (
+      <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <ToastProvider />
@@ -36,6 +42,7 @@ const App = () => (
       </UserContextProvider>
     </TooltipProvider>
   </QueryClientProvider>
-);
+  )
+};
 
 export default App;

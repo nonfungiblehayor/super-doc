@@ -13,11 +13,17 @@ import { SessionContextProvider } from "./context/session";
 import ToastProvider from "./context/toast";
 import { HashRouter } from "react-router-dom";
 import Otp from "./pages/Otp";
+import { useEffect } from "react";
+import { initMixpanel } from "./mixpanel";
 
 
 const queryClient = new QueryClient();
 
-const App = () => (
+const App = () => {
+  useEffect(() => {
+    initMixpanel()
+  }, [])
+  return (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
@@ -38,6 +44,6 @@ const App = () => (
       </UserContextProvider>
     </TooltipProvider>
   </QueryClientProvider>
-);
-
+  )
+}
 export default App;
