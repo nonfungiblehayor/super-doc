@@ -15,7 +15,7 @@ export const useGithub = async() => {
             redirectTo:`${window.location.origin}/`
         }
     })
-    if(data) console.log(data)
+    if(data)
     if(error) throw error
     if(data) return data
 }
