@@ -14,8 +14,8 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 const allowedOrigins = [
-    "https://superdoc-ai.vercel.app/",
-    "https://superdoc-agent.mastra.cloud/",
+    "https://superdoc-ai.vercel.app",
+    "https://superdoc-agent.mastra.cloud",
     "chrome-extension://ippmhdllaoencfelhogbbkmnnhhenchj",
     "vscode-webview://" 
 ]
