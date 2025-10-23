@@ -20,16 +20,33 @@ const allowedOrigins = [
     "chrome-extension://ippmhdllaoencfelhogbbkmnnhhenchj",
     "vscode-webview://" 
 ]
+// const corsOptions = {
+//   origin: function (origin, callback) {
+//     if (!origin || allowedOrigins.some(o => origin.startsWith(o))) {
+//       callback(null, true);
+//     } else {
+//       callback(new Error("Not allowed by CORS")); 
+//     }
+//   },
+//   credentials: true,
+//   optionsSuccessStatus: 200 // for some legacy browsers
+// };
 const corsOptions = {
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.some(o => origin.startsWith(o))) {
+    // Always allow your trusted origins
+    if (!origin) {
+      // Explicitly allow your main site when no origin is sent (curl, SSR, etc.)
+      return callback(null, "https://superdoc-ai.vercel.app");
+    }
+
+    if (allowedOrigins.some(o => origin.startsWith(o))) {
       callback(null, true);
     } else {
-      callback(new Error("Not allowed by CORS")); 
+      callback(new Error("Not allowed by CORS"));
     }
   },
   credentials: true,
-  optionsSuccessStatus: 200 // for some legacy browsers
+  optionsSuccessStatus: 200,
 };
 
 app.use(cors(corsOptions));
