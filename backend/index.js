@@ -34,6 +34,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json());
+app.options(/.*/, cors(corsOptions));
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
