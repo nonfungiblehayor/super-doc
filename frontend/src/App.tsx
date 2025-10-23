@@ -11,7 +11,6 @@ import Layout from "./components/layout";
 import { UserContextProvider } from "./context/user";
 import { SessionContextProvider } from "./context/session";
 import ToastProvider from "./context/toast";
-import { HashRouter } from "react-router-dom";
 import { initMixpanel } from "./mixpanel";
 import { useEffect } from "react";
 

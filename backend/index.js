@@ -22,9 +22,7 @@ const allowedOrigins = [
 ]
 const corsOptions = {
   origin: function (origin, callback) {
-    // Always allow your trusted origins
     if (!origin) {
-      // Explicitly allow your main site when no origin is sent (curl, SSR, etc.)
       return callback(null, "https://superdoc-ai.vercel.app");
     }
 
@@ -289,17 +287,14 @@ app.post("/fetch-html", async (req, res) => {
   if (!url || typeof url !== "string") {
     return res.status(400).json({ error: "Missing or invalid url parameter" });
   }
-
-  // Prevent recursion (your own backend calling itself)
   if (url.startsWith("https://ap-super-doc.onrender.com")) {
     return res.status(400).json({ error: "Recursive fetch blocked" });
   }
 
   try {
-    // Limit the HTML download to ~1MB to avoid memory issues
     const response = await axios.get(url, {
       timeout: 8000,
-      maxContentLength: 1 * 1024 * 1024, // 1 MB
+      maxContentLength: 1 * 1024 * 1024,
       headers: { "User-Agent": "SuperDocBot/1.0" },
     });
 

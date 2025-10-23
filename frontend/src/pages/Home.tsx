@@ -105,7 +105,7 @@ const Home = () => {
     if(isLink) {
       if(appUser) {
         AxiosClient.post("/fetch-html", { url: documentUrl}).then((response) => {
-         if(response.data?.length > 0) {
+         if(response.data?.links?.length > 0 || response.data?.length > 0) {
           createSession.mutateAsync({user_id: appUser?.id, docs_link: documentUrl, data: response.data}).then((res) => {
             navigate(`/chat/${res.id}`);
           }).catch((error) => {
