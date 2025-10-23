@@ -34,7 +34,26 @@ const allowedOrigins = [
 // )
 
 app.use((req, res, next) => {
-  const origin = req.header("Origin");
+  let origin = req.header("Origin");
+
+  // Fallback to Referer if Origin is missing
+  if (!origin && req.header("Referer")) {
+    try {
+      const refererUrl = new URL(req.header("Referer"));
+      origin = refererUrl.origin;
+    } catch {
+      // invalid referer
+    }
+  }
+
+  console.log("CORS Origin detected:", origin);
+
+  const allowedOrigins = [
+    "https://superdoc-ai.vercel.app",
+    "https://superdoc-agent.mastra.cloud",
+    "chrome-extension://ippmhdllaoencfelhogbbkmnnhhenchj",
+    "vscode-webview://"
+  ];
 
   if (!origin || allowedOrigins.some(o => origin.startsWith(o))) {
     res.header("Access-Control-Allow-Origin", origin || "*");
@@ -44,6 +63,7 @@ app.use((req, res, next) => {
     if (req.method === "OPTIONS") return res.sendStatus(204);
     next();
   } else {
+    console.log("❌ Blocked by CORS:", origin);
     res.status(403).json({ error: "Not allowed by CORS" });
   }
 });
