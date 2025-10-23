@@ -134,26 +134,64 @@ async function autoScroll(page) {
 async function fetchWithPuppeteer(url) {
   const browser = await puppeteer.launch({
     headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-gpu",
+    ],
   });
 
   try {
     const page = await browser.newPage();
+
     await page.setUserAgent(
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
       "AppleWebKit/537.36 (KHTML, like Gecko) " +
       "Chrome/120.0.0.0 Safari/537.36"
     );
 
-    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
-    await page.waitForSelector("main, article, nav, .DocContainer", { timeout: 30000 }).catch(() => {});
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+    await page.goto(url, { waitUntil: "networkidle2", timeout: 60000 });
+
+    // 🔄 Attempt to scroll and load lazy content
+    await autoScroll(page);
+
+    // Wait a bit for client-side rendering to finish
+    await new Promise((resolve) => setTimeout(resolve, 4000));
+
     const content = await page.content();
+
+    if (!content || content.length < 500) {
+      throw new Error("Empty or minimal HTML after Puppeteer load");
+    }
+
     return content;
+  } catch (err) {
+    console.error("Puppeteer error:", err.message);
+    throw err;
   } finally {
     await browser.close();
   }
 }
+
+async function autoScroll(page) {
+  await page.evaluate(async () => {
+    await new Promise((resolve) => {
+      let totalHeight = 0;
+      const distance = 500;
+      const timer = setInterval(() => {
+        window.scrollBy(0, distance);
+        totalHeight += distance;
+
+        if (totalHeight >= document.body.scrollHeight) {
+          clearInterval(timer);
+          resolve();
+        }
+      }, 300);
+    });
+  });
+}
+
 
 function extractLinks(html) {
   const $ = cheerio.load(html);
