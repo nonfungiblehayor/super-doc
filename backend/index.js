@@ -15,95 +15,24 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const allowedOrigins = [
     "https://superdoc-ai.vercel.app",
+    "http://localhost:8080",
     "https://superdoc-agent.mastra.cloud",
     "chrome-extension://ippmhdllaoencfelhogbbkmnnhhenchj",
     "vscode-webview://" 
 ]
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.some(o => origin.startsWith(o))) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS")); 
+    }
+  },
+  credentials: true,
+  optionsSuccessStatus: 200 // for some legacy browsers
+};
 
-// app.use(
-//   cors({
-//     origin: function (origin, callback) {
-//       if (!origin || allowedOrigins.some(o => origin.startsWith(o))) {
-//         callback(null, true);
-//       } else {
-//         callback(new Error("Not allowed by CORS"));
-//       }
-//     },
-//     credentials: true,
-//   })
-// )
-
-// app.use((req, res, next) => {
-//   let origin = req.header("Origin");
-
-//   // Fallback to Referer if Origin is missing
-//   if (!origin && req.header("Referer")) {
-//     try {
-//       const refererUrl = new URL(req.header("Referer"));
-//       origin = refererUrl.origin;
-//     } catch {
-//       // invalid referer
-//     }
-//   }
-
-//   console.log("CORS Origin detected:", origin);
-
-//   const allowedOrigins = [
-//     "https://superdoc-ai.vercel.app",
-//     "https://superdoc-agent.mastra.cloud",
-//     "chrome-extension://ippmhdllaoencfelhogbbkmnnhhenchj",
-//     "vscode-webview://"
-//   ];
-
-//   if (!origin || allowedOrigins.some(o => origin.startsWith(o))) {
-//     res.header("Access-Control-Allow-Origin", origin || "*");
-//     res.header("Access-Control-Allow-Credentials", "true");
-//     res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
-//     res.header("Access-Control-Allow-Headers", "Content-Type,Authorization");
-//     if (req.method === "OPTIONS") return res.sendStatus(204);
-//     next();
-//   } else {
-//     console.log("❌ Blocked by CORS:", origin);
-//     res.status(403).json({ error: "Not allowed by CORS" });
-//   }
-// });
-
-app.use((req, res, next) => {
-  let origin = req.header("Origin");
-
-  // Fallback to Referer if Origin is missing
-  if (!origin && req.header("Referer")) {
-    try {
-      const refererUrl = new URL(req.header("Referer"));
-      origin = refererUrl.origin;
-    } catch {}
-  }
-
-  req.effectiveOrigin = origin;
-  next();
-});
-
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // use effectiveOrigin for fallback cases
-      const effectiveOrigin = origin || "*";
-      console.log("CORS Origin detected:", effectiveOrigin);
-
-      if (!origin || allowedOrigins.some(o => effectiveOrigin.startsWith(o))) {
-        return callback(null, true);
-      } else {
-        console.log("❌ Blocked by CORS:", effectiveOrigin);
-        return callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true,
-  })
-);
-
-
-app.options('*', cors());
-
+app.use(cors(corsOptions));
 app.use(express.json());
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
