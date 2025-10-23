@@ -286,53 +286,36 @@ app.post("/answer-from-url", async (req, res) => {
 app.post("/fetch-html", async (req, res) => {
   const { url } = req.body;
 
-  if (!url) {
-    return res.status(400).json({ error: "Missing url parameter" });
+  if (!url || typeof url !== "string") {
+    return res.status(400).json({ error: "Missing or invalid url parameter" });
+  }
+
+  // Prevent recursion (your own backend calling itself)
+  if (url.startsWith("https://ap-super-doc.onrender.com")) {
+    return res.status(400).json({ error: "Recursive fetch blocked" });
   }
 
   try {
-    const html = await fetchHTML(url);
-    const links = extractLinks(html);
-    res.json(links);
+    // Limit the HTML download to ~1MB to avoid memory issues
+    const response = await axios.get(url, {
+      timeout: 8000,
+      maxContentLength: 1 * 1024 * 1024, // 1 MB
+      headers: { "User-Agent": "SuperDocBot/1.0" },
+    });
+
+    const html = response.data;
+    const $ = cheerio.load(html);
+
+    const links = $("a")
+      .map((_, el) => $(el).attr("href"))
+      .get()
+      .filter(Boolean);
+    res.json({ links });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Failed to fetch HTML" });
+    console.error("Fetch error:", error.message);
+    res.status(500).json({ error: "Failed to fetch or parse HTML" });
   }
 });
-
-// app.post("/fetch-html", async (req, res) => {
-//   const { url } = req.body;
-
-//   if (!url || typeof url !== "string") {
-//     return res.status(400).json({ error: "Missing or invalid url parameter" });
-//   }
-
-//   // Prevent recursion (your own backend calling itself)
-//   if (url.startsWith("https://ap-super-doc.onrender.com")) {
-//     return res.status(400).json({ error: "Recursive fetch blocked" });
-//   }
-
-//   try {
-//     // Limit the HTML download to ~1MB to avoid memory issues
-//     const response = await axios.get(url, {
-//       timeout: 8000,
-//       maxContentLength: 1 * 1024 * 1024, // 1 MB
-//       headers: { "User-Agent": "SuperDocBot/1.0" },
-//     });
-
-//     const html = response.data;
-//     const $ = cheerio.load(html);
-
-//     const links = $("a")
-//       .map((_, el) => $(el).attr("href"))
-//       .get()
-//       .filter(Boolean);
-//     res.json({ links });
-//   } catch (error) {
-//     console.error("Fetch error:", error.message);
-//     res.status(500).json({ error: "Failed to fetch or parse HTML" });
-//   }
-// });
 
 app.post("/get-answer-from-docs", async (req, res) => {
   try {
