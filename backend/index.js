@@ -19,18 +19,34 @@ const allowedOrigins = [
     "chrome-extension://ippmhdllaoencfelhogbbkmnnhhenchj",
     "vscode-webview://" 
 ]
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.some(o => origin.startsWith(o))) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true,
-  })
-)
+
+// app.use(
+//   cors({
+//     origin: function (origin, callback) {
+//       if (!origin || allowedOrigins.some(o => origin.startsWith(o))) {
+//         callback(null, true);
+//       } else {
+//         callback(new Error("Not allowed by CORS"));
+//       }
+//     },
+//     credentials: true,
+//   })
+// )
+
+app.use((req, res, next) => {
+  const origin = req.header("Origin");
+
+  if (!origin || allowedOrigins.some(o => origin.startsWith(o))) {
+    res.header("Access-Control-Allow-Origin", origin || "*");
+    res.header("Access-Control-Allow-Credentials", "true");
+    res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+    res.header("Access-Control-Allow-Headers", "Content-Type,Authorization");
+    if (req.method === "OPTIONS") return res.sendStatus(204);
+    next();
+  } else {
+    res.status(403).json({ error: "Not allowed by CORS" });
+  }
+});
 
 app.use(express.json());
 const ai = new GoogleGenAI({
