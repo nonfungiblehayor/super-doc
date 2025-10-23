@@ -47,8 +47,9 @@ const model = 'gemini-2.5-pro';
 async function fetchHTML(url) {
   try {
     const { data } = await axios.get(url, {
-      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
-      timeout: 10000,
+      timeout: 8000,
+      maxContentLength: 1 * 1024 * 1024,
+      headers: { "User-Agent": "SuperDocBot/1.0"},
     });
 
     if (isLikelyDynamic(data)) {
@@ -64,6 +65,7 @@ async function fetchHTML(url) {
     return await fetchWithPuppeteer(url);
   }
 }
+
 
 function isLikelyDynamic(html) {
   const bodyContent = html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "").trim();
@@ -292,19 +294,23 @@ app.post("/fetch-html", async (req, res) => {
   }
 
   try {
-    const response = await axios.get(url, {
-      timeout: 8000,
-      maxContentLength: 1 * 1024 * 1024,
-      headers: { "User-Agent": "SuperDocBot/1.0" },
-    });
-
-    const html = response.data;
-    const $ = cheerio.load(html);
-
-    const links = $("a")
-      .map((_, el) => $(el).attr("href"))
-      .get()
-      .filter(Boolean);
+    // const response = await axios.get(url, {
+    //   timeout: 8000,
+    //   maxContentLength: 1 * 1024 * 1024,
+    //   headers: { "User-Agent": "SuperDocBot/1.0" },
+    // });
+    // if (isLikelyDynamic(response.data)) {
+    //   console.log("⚠ Detected dynamic page, switching to Puppeteer...");
+    //   return await fetchWithPuppeteer(url);
+    // }
+    // const html = response.data;
+    // const $ = cheerio.load(html);
+    // const links = $("a")
+    //   .map((_, el) => $(el).attr("href"))
+    //   .get()
+    //   .filter(Boolean);
+    const html = await fetchHTML(url); 
+    const links = extractLinks(html);
     res.json({ links });
   } catch (error) {
     console.error("Fetch error:", error.message);
