@@ -8,6 +8,7 @@ import puppeteer from 'puppeteer';
 import * as cheerio from "cheerio";
 import { findAnswer, findDoc, findUrl, transcribeAudio } from './instructions.js';
 import JSON5 from "json5";
+import { chromium } from "playwright";
 
 
 dotenv.config();
@@ -113,6 +114,66 @@ function isLikelyDynamic(html) {
 //   return links;
 // }
 
+// async function autoScroll(page) {
+//   await page.evaluate(async () => {
+//     await new Promise((resolve) => {
+//       let totalHeight = 0;
+//       const distance = 500;
+//       const timer = setInterval(() => {
+//         window.scrollBy(0, distance);
+//         totalHeight += distance;
+
+//         if (totalHeight >= document.body.scrollHeight) {
+//           clearInterval(timer);
+//           resolve();
+//         }
+//       }, 300);
+//     });
+//   });
+// }
+// async function fetchWithPuppeteer(url) {
+//   const browser = await puppeteer.launch({
+//     headless: true,
+//     args: [
+//       "--no-sandbox",
+//       "--disable-setuid-sandbox",
+//       "--disable-dev-shm-usage",
+//       "--disable-gpu",
+//     ],
+//   });
+
+//   try {
+//     const page = await browser.newPage();
+
+//     await page.setUserAgent(
+//       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
+//       "AppleWebKit/537.36 (KHTML, like Gecko) " +
+//       "Chrome/120.0.0.0 Safari/537.36"
+//     );
+
+//     await page.goto(url, { waitUntil: "networkidle2", timeout: 60000 });
+
+//     // 🔄 Attempt to scroll and load lazy content
+//     await autoScroll(page);
+
+//     // Wait a bit for client-side rendering to finish
+//     await new Promise((resolve) => setTimeout(resolve, 4000));
+
+//     const content = await page.content();
+
+//     if (!content || content.length < 500) {
+//       throw new Error("Empty or minimal HTML after Puppeteer load");
+//     }
+
+//     return content;
+//   } catch (err) {
+//     console.error("Puppeteer error:", err.message);
+//     throw err;
+//   } finally {
+//     await browser.close();
+//   }
+// }
+
 async function autoScroll(page) {
   await page.evaluate(async () => {
     await new Promise((resolve) => {
@@ -130,8 +191,9 @@ async function autoScroll(page) {
     });
   });
 }
-async function fetchWithPuppeteer(url) {
-  const browser = await puppeteer.launch({
+
+async function fetchWithPlaywright(url) {
+  const browser = await chromium.launch({
     headless: true,
     args: [
       "--no-sandbox",
@@ -142,31 +204,29 @@ async function fetchWithPuppeteer(url) {
   });
 
   try {
-    const page = await browser.newPage();
+    const context = await browser.newContext({
+      userAgent:
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
+        "AppleWebKit/537.36 (KHTML, like Gecko) " +
+        "Chrome/120.0.0.0 Safari/537.36",
+    });
 
-    await page.setUserAgent(
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-      "AppleWebKit/537.36 (KHTML, like Gecko) " +
-      "Chrome/120.0.0.0 Safari/537.36"
-    );
+    const page = await context.newPage();
 
-    await page.goto(url, { waitUntil: "networkidle2", timeout: 60000 });
+    await page.goto(url, { waitUntil: "networkidle", timeout: 60000 });
 
-    // 🔄 Attempt to scroll and load lazy content
     await autoScroll(page);
-
-    // Wait a bit for client-side rendering to finish
     await new Promise((resolve) => setTimeout(resolve, 4000));
 
     const content = await page.content();
 
     if (!content || content.length < 500) {
-      throw new Error("Empty or minimal HTML after Puppeteer load");
+      throw new Error("Empty or minimal HTML after Playwright load");
     }
 
     return content;
   } catch (err) {
-    console.error("Puppeteer error:", err.message);
+    console.error("Playwright error:", err.message);
     throw err;
   } finally {
     await browser.close();
@@ -402,7 +462,8 @@ app.post("/fetch-html", async (req, res) => {
     console.warn("Axios fetch failed, switching to Puppeteer:", axiosError.message);
 
     try {
-      const html = await fetchWithPuppeteer(url);
+      // const html = await fetchWithPuppeteer(url);
+      const html = await fetchWithPlaywright(url)
       const links = extractLinks(html);
       return res.json({ links, source: "puppeteer" });
     } catch (puppeteerError) {
