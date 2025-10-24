@@ -45,6 +45,7 @@ const ai = new GoogleGenAI({
 });
 const upload = multer({ storage: multer.memoryStorage() });
 const model = 'gemini-2.5-pro';
+
 async function fetchHTML(url) {
   try {
     const { data } = await axios.get(url, {
@@ -72,107 +73,6 @@ function isLikelyDynamic(html) {
   const bodyContent = html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "").trim();
   return bodyContent.length < 200;
 }
-
-// async function fetchWithPuppeteer(url) {
-//   const browser = await puppeteer.launch({
-//     headless: true,
-//     args: ["--no-sandbox", "--disable-setuid-sandbox"],
-//   });
-
-//   try {
-//     const page = await browser.newPage();
-//     await page.setUserAgent(
-//       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-//       "AppleWebKit/537.36 (KHTML, like Gecko) " +
-//       "Chrome/120.0.0.0 Safari/537.36"
-//     );
-//     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 })
-//     await page.waitForSelector("main, article, nav, .DocContainer", { timeout: 30000 })
-//     await new Promise(resolve => setTimeout(resolve, 3000))
-//     await autoScroll(page)
-//     const content = await page.content()
-//     return content;
-//   } catch (err) {
-//     throw err
-//   } finally {
-//     await browser.close();
-//   }
-// }
-
-// function extractLinks(html) {
-//   const $ = cheerio.load(html);
-//   const links = [];
-
-//   $("a").each((_, el) => {
-//     const href = $(el).attr("href") || "";
-//     const text = $(el).text().trim();
-//     if (href) {
-//       links.push({ href, text });
-//     }
-//   });
-
-//   return links;
-// }
-
-// async function autoScroll(page) {
-//   await page.evaluate(async () => {
-//     await new Promise((resolve) => {
-//       let totalHeight = 0;
-//       const distance = 500;
-//       const timer = setInterval(() => {
-//         window.scrollBy(0, distance);
-//         totalHeight += distance;
-
-//         if (totalHeight >= document.body.scrollHeight) {
-//           clearInterval(timer);
-//           resolve();
-//         }
-//       }, 300);
-//     });
-//   });
-// }
-// async function fetchWithPuppeteer(url) {
-//   const browser = await puppeteer.launch({
-//     headless: true,
-//     args: [
-//       "--no-sandbox",
-//       "--disable-setuid-sandbox",
-//       "--disable-dev-shm-usage",
-//       "--disable-gpu",
-//     ],
-//   });
-
-//   try {
-//     const page = await browser.newPage();
-
-//     await page.setUserAgent(
-//       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-//       "AppleWebKit/537.36 (KHTML, like Gecko) " +
-//       "Chrome/120.0.0.0 Safari/537.36"
-//     );
-
-//     await page.goto(url, { waitUntil: "networkidle2", timeout: 60000 });
-
-//     // 🔄 Attempt to scroll and load lazy content
-//     await autoScroll(page);
-
-//     // Wait a bit for client-side rendering to finish
-//     await new Promise((resolve) => setTimeout(resolve, 4000));
-
-//     const content = await page.content();
-
-//     if (!content || content.length < 500) {
-//       throw new Error("Empty or minimal HTML after Puppeteer load");
-//     }
-
-//     return content;
-//   } catch (err) {
-//     console.error("Puppeteer error:", err.message);
-//     throw err;
-//   } finally {
-//     await browser.close();
-//   }
-// }
 
 async function autoScroll(page) {
   await page.evaluate(async () => {
@@ -212,8 +112,6 @@ async function fetchWithPlaywright(url) {
     });
 
     const page = await context.newPage();
-
-    // await page.goto(url, { waitUntil: "networkidle", timeout: 60000 });
     await page.goto(url, { waitUntil: "networkidle", timeout: 120000 });
 
     await autoScroll(page);
@@ -400,39 +298,6 @@ app.post("/answer-from-url", async (req, res) => {
   }
 });
 
-// app.post("/fetch-html", async (req, res) => {
-//   const { url } = req.body;
-
-//   if (!url || typeof url !== "string") {
-//     return res.status(400).json({ error: "Missing or invalid url parameter" });
-//   }
-//   if (url.startsWith("https://ap-super-doc.onrender.com")) {
-//     return res.status(400).json({ error: "Recursive fetch blocked" });
-//   }
-
-//   try {
-//     const response = await axios.get(url, {
-//       timeout: 8000,
-//       maxContentLength: 1 * 1024 * 1024,
-//       headers: { "User-Agent": "SuperDocBot/1.0" },
-//     });
-//     if (isLikelyDynamic(response.data)) {
-//       console.log("⚠ Detected dynamic page, switching to Puppeteer...");
-//       return await fetchWithPuppeteer(url);
-//     }
-//     const html = response.data;
-//     const $ = cheerio.load(html);
-//     const links = $("a")
-//       .map((_, el) => $(el).attr("href"))
-//       .get()
-//       .filter(Boolean);
-//     res.json({ links });
-//   } catch (error) {
-//     console.error("Fetch error:", error.message);
-//     res.status(500).json({ error: "Failed to fetch or parse HTML" });
-//   }
-// });
-
 app.post("/fetch-html", async (req, res) => {
   const { url } = req.body;
 
@@ -445,7 +310,6 @@ app.post("/fetch-html", async (req, res) => {
   }
 
   try {
-    // Try Axios first (faster)
     const response = await axios.get(url, {
       timeout: 8000,
       maxContentLength: 1 * 1024 * 1024,
@@ -463,7 +327,6 @@ app.post("/fetch-html", async (req, res) => {
     console.warn("Axios fetch failed, switching to Puppeteer:", axiosError.message);
 
     try {
-      // const html = await fetchWithPuppeteer(url);
       const html = await fetchWithPlaywright(url)
       const links = extractLinks(html);
       return res.json({ links, source: "puppeteer" });
