@@ -213,7 +213,8 @@ async function fetchWithPlaywright(url) {
 
     const page = await context.newPage();
 
-    await page.goto(url, { waitUntil: "networkidle", timeout: 60000 });
+    // await page.goto(url, { waitUntil: "networkidle", timeout: 60000 });
+    await page.goto(url, { waitUntil: "networkidle", timeout: 120000 });
 
     await autoScroll(page);
     await new Promise((resolve) => setTimeout(resolve, 4000));
