@@ -1,6 +1,7 @@
 import { getSessions } from "@/hooks/supabase/session"
 import { Loader2 } from "lucide-react"
 import { Separator } from "./ui/separator"
+import { Link } from "react-router-dom"
 
 const HistoryDropdown = ({user_id}: {user_id: string}) => {
     const { data: history, error: historyError, isLoading: historyLoading} = getSessions(user_id)
@@ -9,10 +10,10 @@ const HistoryDropdown = ({user_id}: {user_id: string}) => {
             {history && history?.length > 0 && (
                 <div className="py-2">
                     {history?.map((history) => (
-                        <a key={history?.id} href={`/chat/${history.id}`} className="pb-4 flex flex-col justify-start items-start">
+                        <Link key={history?.id} to={`/chat/${history.id}`} className="pb-4 flex flex-col justify-start items-start">
                             <p className="mb-[3px]">{history?.docs_link}</p>
                             <Separator />
-                        </a>
+                        </Link>
                     ))}
                 </div>
             )}
