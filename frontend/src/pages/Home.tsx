@@ -76,13 +76,17 @@ const Home = () => {
   const navigate = useNavigate();
   const heroTexts = [
     {
-      main: "Because no one actually reads the",
-      sub: "docs."
+      main: "Forget searching in docs —",
+      sub: "just chat with them."
     }, 
     {
-      main: "Skip the scroll, skip the search —",
-      sub: "just ask."
-    }
+      main: "Stop scrolling through pages —",
+      sub: "start getting answers."
+    },
+    {
+      main: "You read code, not docs —",
+      sub: "let AI handle the boring part."
+    },
   ]
   const tabs = ["Search For Documentation", "History"]
   const [heroText, setHerotext] = useState<number>(0)
@@ -140,7 +144,7 @@ const Home = () => {
             {/* Badge */}
             <div className="inline-flex items-center rounded-full border px-3 py-1 text-sm font-medium mb-8 bg-primary-light border-primary/20">
               <Sparkles className="h-4 w-4 mr-2 text-primary" />
-                Documentation Copilot
+               Documentation Oracle
             </div>
 
             {/* Main Heading */}
