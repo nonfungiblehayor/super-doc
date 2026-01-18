@@ -76,16 +76,16 @@ const Home = () => {
   const navigate = useNavigate();
   const heroTexts = [
     {
+      main: "Turn any documentation into a chatbot",
+      sub: "You read code, not docs —"
+    },
+    {
       main: "Forget searching in docs —",
       sub: "just chat with them."
     }, 
     {
       main: "Stop scrolling through pages —",
       sub: "start getting answers."
-    },
-    {
-      main: "You read code, not docs —",
-      sub: "let AI handle the boring part."
     },
   ]
   const tabs = ["Search For Documentation", "History"]
